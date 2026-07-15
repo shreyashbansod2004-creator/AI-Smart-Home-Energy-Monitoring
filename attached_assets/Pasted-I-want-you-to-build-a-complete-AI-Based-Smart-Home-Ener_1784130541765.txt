@@ -1,0 +1,837 @@
+I want you to build a complete AI-Based Smart Home Energy Monitoring and Electricity Bill Prediction System.
+
+I am attaching a dashboard reference image. The final UI/UX should closely match that dashboard image. Use it as the design reference for layout, colors, cards, graphs, spacing, sidebar, navigation, and overall professional appearance.
+
+The application should be built using:
+
+Frontend:
+- Streamlit
+- Custom CSS styling
+- Responsive dashboard layout
+- Modern dark/light theme similar to the uploaded dashboard image
+
+Backend:
+- Python
+- Modular folder structure
+- Firebase-ready architecture
+- Currently use dummy data
+- Later I will replace Firebase and ML model with my own implementation
+
+Machine Learning:
+- Create a placeholder ML prediction pipeline
+- Use a dummy trained model for now
+- Keep ML code isolated in a separate folder
+- Later I will replace only the model file and prediction function with my actual ML model
+
+
+PROJECT NAME:
+AI Smart Home Energy Monitoring and Alert System
+
+
+==================================================
+MAIN OBJECTIVE
+==================================================
+
+The system should monitor home electricity consumption, analyze energy usage, predict electricity bills, detect abnormal consumption, and provide intelligent recommendations.
+
+The final system should simulate a smart home where appliances consume electricity and AI analyzes the consumption pattern.
+
+
+==================================================
+APPLICATION FEATURES
+==================================================
+
+
+1. DASHBOARD HOME PAGE
+======================
+
+Create a professional dashboard similar to the uploaded image.
+
+Dashboard should contain:
+
+
+A) Top Navigation Bar
+
+Include:
+
+- Project title:
+"AI Smart Home Energy Monitoring System"
+
+- Current date and time
+
+- User profile section
+
+- Notification icon
+
+
+--------------------------------------------------
+
+
+B) Energy Summary Cards
+
+Create attractive metric cards:
+
+1. Current Power Consumption
+
+Example:
+2.45 kW
+
+2. Today's Energy Usage
+
+Example:
+18.6 kWh
+
+3. Monthly Energy Consumption
+
+Example:
+245 kWh
+
+4. Estimated Monthly Bill
+
+Example:
+₹1850
+
+
+Each card should have:
+
+- Icon
+- Value
+- Small description
+- Color indicator
+- Modern card design
+
+
+--------------------------------------------------
+
+
+C) Real-Time Energy Monitoring Section
+
+Display:
+
+Line chart:
+
+"Live Power Consumption"
+
+X-axis:
+Time
+
+Y-axis:
+Power in Watts
+
+
+Use dummy streaming data.
+
+
+Example:
+
+Time:
+10:00
+10:05
+10:10
+
+Power:
+850W
+920W
+1100W
+
+
+--------------------------------------------------
+
+
+D) Energy Consumption Analysis
+
+
+Create charts:
+
+1. Daily Energy Usage
+
+Bar chart
+
+
+2. Weekly Consumption Trend
+
+Line chart
+
+
+3. Monthly Consumption Pattern
+
+Area chart
+
+
+4. Appliance-wise Consumption
+
+Pie chart
+
+
+Example:
+
+
+Fan:
+20%
+
+AC:
+40%
+
+Lights:
+10%
+
+Refrigerator:
+15%
+
+Other:
+15%
+
+
+
+--------------------------------------------------
+
+
+2. APPLIANCE MONITORING PAGE
+=============================
+
+
+Create separate page:
+
+"Appliances"
+
+
+Show all connected appliances.
+
+
+Each appliance card should include:
+
+
+Example:
+
+
+AC
+
+Status:
+ON
+
+Power:
+1200W
+
+Today's Usage:
+6.5 kWh
+
+Monthly Cost:
+₹850
+
+
+Controls:
+
+Button:
+Turn ON
+
+Button:
+Turn OFF
+
+
+For now simulate appliance control using dummy state.
+
+
+Include appliances:
+
+
+- Air Conditioner
+- Refrigerator
+- Fan
+- Lights
+- Washing Machine
+- Television
+- Water Heater
+
+
+--------------------------------------------------
+
+
+3. AI BILL PREDICTION PAGE
+==========================
+
+
+Create ML prediction dashboard.
+
+
+Features:
+
+
+Input:
+
+Previous energy consumption
+
+Current month usage
+
+Average daily consumption
+
+Number of appliances
+
+
+Output:
+
+
+Predicted electricity bill:
+
+Example:
+
+₹2150
+
+
+Also show:
+
+
+Prediction confidence:
+
+92%
+
+
+Expected consumption:
+
+280 kWh
+
+
+--------------------------------------------------
+
+
+ML IMPLEMENTATION:
+
+Create folder:
+
+
+models/
+
+inside:
+
+
+bill_prediction.py
+
+
+Create:
+
+
+class EnergyBillPredictor:
+
+
+Functions:
+
+
+load_model()
+
+predict_bill(input_data)
+
+
+For now:
+
+Use a dummy RandomForestRegressor model trained on generated synthetic data.
+
+
+Generate dummy dataset:
+
+
+Features:
+
+daily_usage
+monthly_usage
+number_of_appliances
+average_power
+
+
+Target:
+
+electricity_bill
+
+
+Save model:
+
+
+bill_model.pkl
+
+
+Later I will replace this file with my real ML model.
+
+
+
+--------------------------------------------------
+
+
+4. ENERGY ANALYTICS PAGE
+========================
+
+
+Create advanced analytics dashboard.
+
+
+Include:
+
+
+Energy efficiency score:
+
+
+Example:
+
+78/100
+
+
+Show:
+
+
+- Peak usage hours
+- Lowest usage hours
+- Energy saving opportunities
+- Consumption comparison
+
+
+Example:
+
+
+AI Recommendation:
+
+"Your AC consumption is 35% higher than normal. Increasing temperature by 2°C can save approximately ₹300/month."
+
+
+--------------------------------------------------
+
+
+5. ALERT SYSTEM
+===============
+
+
+Create intelligent alert system.
+
+
+Generate alerts:
+
+
+Examples:
+
+
+High Consumption Alert:
+
+"Power consumption increased above normal limit."
+
+
+Appliance Alert:
+
+"AC running continuously for 8 hours."
+
+
+Bill Alert:
+
+"Your estimated bill may exceed ₹2500."
+
+
+Display alerts using:
+
+- Warning cards
+- Notification badges
+
+
+--------------------------------------------------
+
+
+6. DATABASE STRUCTURE
+=====================
+
+
+Make Firebase integration ready.
+
+
+Create:
+
+
+database/
+
+
+firebase_config.py
+
+
+Create functions:
+
+
+save_energy_data()
+
+get_energy_data()
+
+save_user_settings()
+
+
+Currently replace Firebase with dummy JSON data.
+
+
+Later I will connect Firebase.
+
+
+Database collections:
+
+
+users
+
+energy_data
+
+appliances
+
+predictions
+
+alerts
+
+
+
+Example energy_data:
+
+
+{
+timestamp:
+"2026-07-15 10:30",
+
+power:
+1200,
+
+energy_consumed:
+2.5,
+
+voltage:
+230,
+
+current:
+5.2
+}
+
+
+--------------------------------------------------
+
+
+7. SIDEBAR NAVIGATION
+=====================
+
+
+Create sidebar exactly like professional dashboard applications.
+
+
+Menu:
+
+
+Dashboard
+
+Appliances
+
+Energy Analytics
+
+AI Bill Prediction
+
+Alerts
+
+Settings
+
+
+Include icons.
+
+
+--------------------------------------------------
+
+
+8. SETTINGS PAGE
+================
+
+
+Include:
+
+
+User information
+
+
+Electricity details:
+
+
+Electricity provider
+
+Tariff rate
+
+Monthly budget
+
+
+Notification settings
+
+
+--------------------------------------------------
+
+
+9. PROJECT STRUCTURE
+====================
+
+
+Create clean modular structure:
+
+
+AI-Smart-Home-Energy/
+
+
+app.py
+
+
+pages/
+
+dashboard.py
+
+appliances.py
+
+analytics.py
+
+bill_prediction.py
+
+alerts.py
+
+settings.py
+
+
+
+components/
+
+
+navbar.py
+
+sidebar.py
+
+cards.py
+
+charts.py
+
+footer.py
+
+
+
+models/
+
+
+bill_prediction.py
+
+bill_model.pkl
+
+
+
+data/
+
+
+dummy_energy_data.csv
+
+
+database/
+
+
+firebase_config.py
+
+
+utils/
+
+
+helpers.py
+
+
+
+assets/
+
+
+style.css
+
+
+
+--------------------------------------------------
+
+
+10. DESIGN REQUIREMENTS
+=======================
+
+
+Follow the uploaded dashboard image:
+
+
+Requirements:
+
+
+- Modern dashboard UI
+- Rounded cards
+- Smooth shadows
+- Professional spacing
+- Dark professional theme
+- Clean typography
+- Responsive layout
+- Attractive charts
+- Minimal clutter
+
+
+Use:
+
+
+Streamlit
+
+Plotly
+
+Pandas
+
+NumPy
+
+Scikit-learn
+
+
+--------------------------------------------------
+
+
+11. DUMMY DATA GENERATION
+=========================
+
+
+Create realistic smart home energy data.
+
+Generate:
+
+
+30 days of consumption
+
+
+Columns:
+
+
+date
+
+time
+
+power
+
+voltage
+
+current
+
+energy_consumption
+
+temperature
+
+appliance
+
+
+Generate different appliance patterns.
+
+
+Example:
+
+
+Night:
+
+Low consumption
+
+
+Morning:
+
+Medium
+
+
+Evening:
+
+High
+
+
+--------------------------------------------------
+
+
+12. FUTURE HARDWARE INTEGRATION READY
+=====================================
+
+
+Keep architecture ready for:
+
+
+ESP32
+
+Energy sensors
+
+IoT data
+
+
+Future flow:
+
+
+Energy Sensor
+
+↓
+
+ESP32
+
+↓
+
+Firebase
+
+↓
+
+Python Backend
+
+↓
+
+ML Model
+
+↓
+
+Streamlit Dashboard
+
+
+--------------------------------------------------
+
+
+13. DEPLOYMENT
+==============
+
+
+Make application compatible with Streamlit Cloud.
+
+
+Requirements:
+
+
+requirements.txt
+
+
+Include:
+
+
+streamlit
+
+pandas
+
+numpy
+
+plotly
+
+scikit-learn
+
+firebase-admin
+
+
+Provide:
+
+
+README.md
+
+
+with:
+
+Installation steps
+
+Running instructions
+
+Future Firebase setup
+
+ML model replacement instructions
+
+
+--------------------------------------------------
+
+
+IMPORTANT:
+
+1. Build the complete working application.
+2. Do not hardcode values directly in UI.
+3. Keep ML, database, UI separate.
+4. Use dummy data now.
+5. Make it easy to replace:
+   - ML model
+   - Firebase database
+   - ESP32 sensor data
+6. Match the uploaded dashboard image design as closely as possible.
+7. Write clean production-quality Python code.

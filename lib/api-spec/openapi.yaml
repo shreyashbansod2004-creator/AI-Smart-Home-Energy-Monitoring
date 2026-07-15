@@ -3,13 +3,26 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AI Smart Home Energy Monitoring API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: dashboard
+    description: Dashboard summary and live metrics
+  - name: appliances
+    description: Appliance management and control
+  - name: energy
+    description: Energy consumption data and analytics
+  - name: alerts
+    description: Alert management
+  - name: prediction
+    description: AI bill prediction
+  - name: settings
+    description: User settings
+
 paths:
   /healthz:
     get:
@@ -24,6 +37,232 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary metrics
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/live:
+    get:
+      operationId: getLiveMetrics
+      tags: [dashboard]
+      summary: Get live power metrics
+      responses:
+        "200":
+          description: Live metrics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LiveMetrics"
+
+  /energy/consumption:
+    get:
+      operationId: getEnergyConsumption
+      tags: [energy]
+      summary: Get energy consumption data
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, year]
+          description: Time period for data
+      responses:
+        "200":
+          description: Energy consumption data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EnergyDataPoint"
+
+  /energy/appliance-breakdown:
+    get:
+      operationId: getApplianceBreakdown
+      tags: [energy]
+      summary: Get appliance-wise energy breakdown
+      responses:
+        "200":
+          description: Appliance breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ApplianceEnergyShare"
+
+  /energy/analytics:
+    get:
+      operationId: getEnergyAnalytics
+      tags: [energy]
+      summary: Get energy analytics and efficiency score
+      responses:
+        "200":
+          description: Energy analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnergyAnalytics"
+
+  /appliances:
+    get:
+      operationId: getAppliances
+      tags: [appliances]
+      summary: List all appliances
+      responses:
+        "200":
+          description: List of appliances
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Appliance"
+
+  /appliances/{id}/toggle:
+    patch:
+      operationId: toggleAppliance
+      tags: [appliances]
+      summary: Toggle appliance on/off
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplianceToggleInput"
+      responses:
+        "200":
+          description: Updated appliance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appliance"
+
+  /appliances/turn-all-off:
+    post:
+      operationId: turnAllOff
+      tags: [appliances]
+      summary: Turn off all appliances
+      responses:
+        "200":
+          description: All appliances turned off
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TurnAllOffResult"
+
+  /alerts:
+    get:
+      operationId: getAlerts
+      tags: [alerts]
+      summary: Get all alerts
+      responses:
+        "200":
+          description: List of alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+
+  /alerts/{id}/dismiss:
+    patch:
+      operationId: dismissAlert
+      tags: [alerts]
+      summary: Dismiss an alert
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Alert dismissed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+
+  /prediction/bill:
+    post:
+      operationId: predictBill
+      tags: [prediction]
+      summary: Predict electricity bill using AI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PredictionInput"
+      responses:
+        "200":
+          description: Bill prediction result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PredictionResult"
+
+  /prediction/current:
+    get:
+      operationId: getCurrentPrediction
+      tags: [prediction]
+      summary: Get current month bill prediction
+      responses:
+        "200":
+          description: Current prediction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PredictionResult"
+
+  /settings:
+    get:
+      operationId: getSettings
+      tags: [settings]
+      summary: Get user settings
+      responses:
+        "200":
+          description: User settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSettings"
+    put:
+      operationId: updateSettings
+      tags: [settings]
+      summary: Update user settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserSettingsInput"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserSettings"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +273,369 @@ components:
       required:
         - status
 
+    DashboardSummary:
+      type: object
+      properties:
+        currentPowerW:
+          type: number
+        todayEnergyKwh:
+          type: number
+        monthEnergyKwh:
+          type: number
+        estimatedBillInr:
+          type: number
+        voltageV:
+          type: number
+        currentA:
+          type: number
+        powerFactorKw:
+          type: number
+        todayChangePercent:
+          type: number
+        monthChangePercent:
+          type: number
+        billChangePercent:
+          type: number
+        systemStatus:
+          type: string
+        lastUpdated:
+          type: string
+        activeApplianceCount:
+          type: integer
+        totalApplianceCount:
+          type: integer
+      required:
+        - currentPowerW
+        - todayEnergyKwh
+        - monthEnergyKwh
+        - estimatedBillInr
+        - voltageV
+        - currentA
+        - powerFactorKw
+        - todayChangePercent
+        - monthChangePercent
+        - billChangePercent
+        - systemStatus
+        - lastUpdated
+        - activeApplianceCount
+        - totalApplianceCount
+
+    LiveMetrics:
+      type: object
+      properties:
+        timestamp:
+          type: string
+        powerW:
+          type: number
+        voltageV:
+          type: number
+        currentA:
+          type: number
+        frequency:
+          type: number
+        history:
+          type: array
+          items:
+            $ref: "#/components/schemas/PowerHistoryPoint"
+      required:
+        - timestamp
+        - powerW
+        - voltageV
+        - currentA
+        - frequency
+        - history
+
+    PowerHistoryPoint:
+      type: object
+      properties:
+        time:
+          type: string
+        powerW:
+          type: number
+      required:
+        - time
+        - powerW
+
+    EnergyDataPoint:
+      type: object
+      properties:
+        label:
+          type: string
+        energyKwh:
+          type: number
+        date:
+          type: string
+      required:
+        - label
+        - energyKwh
+        - date
+
+    ApplianceEnergyShare:
+      type: object
+      properties:
+        name:
+          type: string
+        percentage:
+          type: number
+        energyKwh:
+          type: number
+        color:
+          type: string
+      required:
+        - name
+        - percentage
+        - energyKwh
+        - color
+
+    EnergyAnalytics:
+      type: object
+      properties:
+        efficiencyScore:
+          type: integer
+        peakUsageHour:
+          type: string
+        lowestUsageHour:
+          type: string
+        avgDailyKwh:
+          type: number
+        savingOpportunities:
+          type: array
+          items:
+            type: string
+        recommendations:
+          type: array
+          items:
+            $ref: "#/components/schemas/Recommendation"
+        weeklyTrend:
+          type: array
+          items:
+            $ref: "#/components/schemas/EnergyDataPoint"
+        hourlyPattern:
+          type: array
+          items:
+            $ref: "#/components/schemas/EnergyDataPoint"
+      required:
+        - efficiencyScore
+        - peakUsageHour
+        - lowestUsageHour
+        - avgDailyKwh
+        - savingOpportunities
+        - recommendations
+        - weeklyTrend
+        - hourlyPattern
+
+    Recommendation:
+      type: object
+      properties:
+        id:
+          type: string
+        appliance:
+          type: string
+        message:
+          type: string
+        savingInr:
+          type: number
+        severity:
+          type: string
+          enum: [info, warning, critical]
+      required:
+        - id
+        - appliance
+        - message
+        - savingInr
+        - severity
+
+    Appliance:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        location:
+          type: string
+        isOn:
+          type: boolean
+        powerW:
+          type: number
+        todayUsageKwh:
+          type: number
+        monthlyCostInr:
+          type: number
+        iconType:
+          type: string
+        runningHoursToday:
+          type: number
+      required:
+        - id
+        - name
+        - location
+        - isOn
+        - powerW
+        - todayUsageKwh
+        - monthlyCostInr
+        - iconType
+        - runningHoursToday
+
+    ApplianceToggleInput:
+      type: object
+      properties:
+        isOn:
+          type: boolean
+      required:
+        - isOn
+
+    TurnAllOffResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+        - message
+
+    Alert:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [high_power, unusual_usage, bill_alert, appliance_alert, info]
+        title:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        isDismissed:
+          type: boolean
+        applianceName:
+          type: ["string", "null"]
+      required:
+        - id
+        - type
+        - title
+        - message
+        - timestamp
+        - severity
+        - isDismissed
+        - applianceName
+
+    PredictionInput:
+      type: object
+      properties:
+        prevMonthKwh:
+          type: number
+        currentMonthKwh:
+          type: number
+        avgDailyKwh:
+          type: number
+        applianceCount:
+          type: integer
+        targetBudgetInr:
+          type: ["number", "null"]
+      required:
+        - prevMonthKwh
+        - currentMonthKwh
+        - avgDailyKwh
+        - applianceCount
+
+    PredictionResult:
+      type: object
+      properties:
+        predictedBillInr:
+          type: number
+        predictedBillMinInr:
+          type: number
+        predictedBillMaxInr:
+          type: number
+        confidencePercent:
+          type: number
+        expectedKwh:
+          type: number
+        targetBudgetInr:
+          type: number
+        budgetUsedPercent:
+          type: number
+        willExceedBudget:
+          type: boolean
+        tip:
+          type: string
+        daysRemainingInMonth:
+          type: integer
+      required:
+        - predictedBillInr
+        - predictedBillMinInr
+        - predictedBillMaxInr
+        - confidencePercent
+        - expectedKwh
+        - targetBudgetInr
+        - budgetUsedPercent
+        - willExceedBudget
+        - tip
+        - daysRemainingInMonth
+
+    UserSettings:
+      type: object
+      properties:
+        userName:
+          type: string
+        homeDescription:
+          type: string
+        electricityProvider:
+          type: string
+        tariffRatePerKwh:
+          type: number
+        monthlyBudgetInr:
+          type: number
+        highPowerThresholdW:
+          type: number
+        notificationsEnabled:
+          type: boolean
+        emailNotifications:
+          type: boolean
+        smsNotifications:
+          type: boolean
+        timezone:
+          type: string
+      required:
+        - userName
+        - homeDescription
+        - electricityProvider
+        - tariffRatePerKwh
+        - monthlyBudgetInr
+        - highPowerThresholdW
+        - notificationsEnabled
+        - emailNotifications
+        - smsNotifications
+        - timezone
+
+    UserSettingsInput:
+      type: object
+      properties:
+        userName:
+          type: string
+        homeDescription:
+          type: string
+        electricityProvider:
+          type: string
+        tariffRatePerKwh:
+          type: number
+        monthlyBudgetInr:
+          type: number
+        highPowerThresholdW:
+          type: number
+        notificationsEnabled:
+          type: boolean
+        emailNotifications:
+          type: boolean
+        smsNotifications:
+          type: boolean
+        timezone:
+          type: string

@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "AI Smart Home Energy Monitor"
+version = "1.0.0"
+id = "artifacts/smart-energy"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23293
+
+[services.development]
+run = "pnpm --filter @workspace/smart-energy run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/smart-energy", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/smart-energy/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23293"
+BASE_PATH = "/"
