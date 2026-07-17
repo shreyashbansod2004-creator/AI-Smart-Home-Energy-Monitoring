@@ -1,0 +1,1 @@
+- [Neon + Replit DB coexistence](neon-db-setup.md) — DATABASE_URL is Replit-managed; use NEON_DATABASE_URL to point to Neon in production.
