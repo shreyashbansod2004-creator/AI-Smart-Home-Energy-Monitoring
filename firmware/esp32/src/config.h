@@ -1,12 +1,17 @@
 #pragma once
 
-// ─── WiFi Configuration ───────────────────────────────────────────────────────
-#define WIFI_SSID        "YOUR_WIFI_SSID"
-#define WIFI_PASSWORD    "YOUR_WIFI_PASSWORD"
+// ─── Wi-Fi & Backend URL ──────────────────────────────────────────────────────
+// These are NO LONGER hardcoded here.
+// On first boot (or after config is cleared) the device starts a Wi-Fi
+// configuration portal (AP SSID: "SmartEnergy-Setup") where the user enters:
+//   • Wi-Fi SSID
+//   • Wi-Fi Password
+//   • Backend API URL  (e.g. https://my-app.onrender.com/api)
+// Values are stored in ESP32 NVS (non-volatile storage) via ConfigManager
+// and reloaded automatically on every subsequent boot.
 
-// ─── Backend API ──────────────────────────────────────────────────────────────
-// Replace with your deployed Replit URL or local IP when testing
-#define API_BASE_URL     "https://YOUR_REPLIT_APP.replit.app/api"
+// ─── Device Identity ──────────────────────────────────────────────────────────
+// Unique key sent with every reading; must match the device row in the DB.
 #define DEVICE_KEY       "esp32_001"
 
 // ─── GPIO Pin Mapping ─────────────────────────────────────────────────────────
@@ -38,12 +43,12 @@
 #define ADC_REF_VOLTAGE       3.3f
 #define ADC_RESOLUTION        4096.0f
 
-// ─── Timing (milliseconds) ───────────────────────────────────────────────────
-#define SENSOR_READ_INTERVAL    500    // Read sensors every 500ms
+// ─── Timing (milliseconds) ────────────────────────────────────────────────────
+#define SENSOR_READ_INTERVAL    500    // Read sensors every 500 ms
 #define API_POST_INTERVAL       5000   // POST readings every 5 seconds
 #define COMMAND_POLL_INTERVAL   1000   // Poll for commands every 1 second
 #define OLED_REFRESH_INTERVAL   2000   // Refresh OLED every 2 seconds
-#define WIFI_RECONNECT_TIMEOUT  30000  // Reconnect timeout
+#define WIFI_CONNECT_TIMEOUT    30000  // Initial connect timeout (ms)
 
 // ─── OLED Display ─────────────────────────────────────────────────────────────
 #define OLED_WIDTH       128
