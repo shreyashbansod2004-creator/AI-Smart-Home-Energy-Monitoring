@@ -295,26 +295,25 @@ router.get("/energy/analytics", async (req, res): Promise<void> => {
 
     // ── Appliance-driven recommendations ────────────────────────────────────
     const appliances = await db.select().from(appliancesTable);
-    const ac = appliances.find((a) => a.name.toLowerCase().includes("condition") || a.name.toLowerCase().includes("ac"));
-    const washer = appliances.find((a) => a.name.toLowerCase().includes("wash"));
-    const highPower = appliances.filter((a) => a.powerW >= 1000);
+    const fan = appliances.find((a) => a.name.toLowerCase().includes("fan"));
+    const highPower = appliances.filter((a) => a.powerW >= 100);
 
-    // Efficiency score: based on avg daily usage (target 7–10 kWh for a 4-room home)
-    const efficiencyScore = Math.max(40, Math.min(95, Math.round(100 - (avgDailyKwh - 7) * 4)));
+    // Efficiency score: based on avg daily usage (target 1–3 kWh for a lights+fan home)
+    const efficiencyScore = Math.max(40, Math.min(95, Math.round(100 - (avgDailyKwh - 1) * 8)));
 
     // Peak hour detection from hourly pattern
     const peakHour = hourlyPattern.reduce((max, h) => (h.energyKwh > max.energyKwh ? h : max), hourlyPattern[0]);
     const lowHour = hourlyPattern.reduce((min, h) => (h.energyKwh < min.energyKwh ? h : min), hourlyPattern[0]);
 
     const recommendations = [];
-    if (ac && ac.powerW >= 1500) {
-      recommendations.push({ id: "rec-1", appliance: ac.name, message: `Your ${ac.name} (${ac.powerW}W) is a top energy consumer. Increasing set temperature by 2°C can save approx ₹300/month.`, savingInr: 300, severity: "warning" });
+    if (fan) {
+      recommendations.push({ id: "rec-1", appliance: fan.name, message: `Running ${fan.name} continuously adds to consumption. Use a timer to switch it off when not needed.`, savingInr: 30, severity: "info" });
     }
-    if (washer) {
-      recommendations.push({ id: "rec-2", appliance: washer.name, message: `Running ${washer.name} during peak hours adds up to 30% to electricity cost. Shift usage to off-peak hours (10pm–6am).`, savingInr: 180, severity: "warning" });
+    if (highPower.length >= 3) {
+      recommendations.push({ id: "rec-2", appliance: highPower[0].name, message: `${highPower.length} lights are on simultaneously. Switch off lights in unoccupied rooms to cut usage.`, savingInr: 50, severity: "warning" });
     }
-    if (highPower.length > 0) {
-      recommendations.push({ id: "rec-3", appliance: highPower[0].name, message: `${highPower.length} appliance(s) above 1000W detected. Staggering their usage prevents simultaneous peak load.`, savingInr: 150, severity: "info" });
+    if (avgDailyKwh < 2) {
+      recommendations.push({ id: "rec-3", appliance: "System", message: "Your energy usage is very low — great job! Continue switching off lights and the fan when leaving rooms.", savingInr: 0, severity: "info" });
     }
     if (recommendations.length === 0) {
       recommendations.push({ id: "rec-0", appliance: "System", message: "Your energy usage looks efficient! Keep maintaining current habits to stay on budget.", savingInr: 0, severity: "info" });

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
-import { db, appliancesTable } from "@workspace/db";
+import { db, appliancesTable, commandsTable } from "@workspace/db";
 import {
   GetAppliancesResponse,
   GetAppliancesResponseItem,
@@ -11,6 +11,9 @@ import {
 } from "@workspace/api-zod";
 
 const router = Router();
+
+// ESP32 device key — commands are dispatched to this device
+const ESP32_DEVICE_KEY = "esp32_001";
 
 // Derived usage data (not stored in DB — computed from powerW)
 function deriveUsage(appliance: typeof appliancesTable.$inferSelect) {
@@ -48,23 +51,67 @@ router.patch("/appliances/:id/toggle", async (req, res): Promise<void> => {
     res.status(400).json({ error: body.error.message });
     return;
   }
+
   const [updated] = await db
     .update(appliancesTable)
     .set({ isOn: body.data.isOn, updatedAt: new Date() })
     .where(eq(appliancesTable.id, params.data.id))
     .returning();
+
   if (!updated) {
     res.status(404).json({ error: "Appliance not found" });
     return;
   }
+
+  // Dispatch a relay command to the ESP32 if this appliance has a relay assigned
+  if (updated.relayNumber !== null && updated.relayNumber !== undefined) {
+    try {
+      await db.insert(commandsTable).values({
+        deviceKey:   ESP32_DEVICE_KEY,
+        applianceId: updated.id,
+        relayNumber: updated.relayNumber,
+        command:     body.data.isOn ? "ON" : "OFF",
+        acknowledged: false,
+        createdAt:   new Date(),
+      });
+    } catch (err) {
+      // Non-fatal: command dispatch failure shouldn't break the UI response
+      console.error("Command dispatch error:", err);
+    }
+  }
+
   const result = ToggleApplianceResponse.parse(deriveUsage(updated));
   res.json(result);
 });
 
 router.post("/appliances/turn-all-off", async (req, res): Promise<void> => {
+  // Fetch all appliances to dispatch individual commands
+  const rows = await db.select().from(appliancesTable);
+
   await db
     .update(appliancesTable)
     .set({ isOn: false, updatedAt: new Date() });
+
+  // Dispatch OFF commands for every appliance that has a relay
+  const commandValues = rows
+    .filter((a) => a.relayNumber !== null)
+    .map((a) => ({
+      deviceKey:    ESP32_DEVICE_KEY,
+      applianceId:  a.id,
+      relayNumber:  a.relayNumber as number,
+      command:      "OFF" as const,
+      acknowledged: false,
+      createdAt:    new Date(),
+    }));
+
+  if (commandValues.length > 0) {
+    try {
+      await db.insert(commandsTable).values(commandValues);
+    } catch (err) {
+      console.error("Bulk command dispatch error:", err);
+    }
+  }
+
   const result = TurnAllOffResponse.parse({ success: true, message: "All appliances turned off" });
   res.json(result);
 });

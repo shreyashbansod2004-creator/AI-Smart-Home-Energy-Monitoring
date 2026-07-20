@@ -1,0 +1,455 @@
+My application is already completed with:
+
+• React Frontend
+• Express.js Backend
+• Neon PostgreSQL Database
+• Dashboard
+• Appliance Control
+• Alerts
+• Energy Analytics
+• History
+• AI Bill Prediction
+
+DO NOT redesign the application.
+
+DO NOT change the theme.
+
+DO NOT change navigation.
+
+DO NOT change layouts.
+
+DO NOT remove any existing features.
+
+Only modify the application so it matches my real hardware.
+
+====================================================
+STEP 1
+UPDATE APPLIANCE NAMES
+====================================================
+
+Replace the current appliance names everywhere in the project.
+
+OLD
+
+Ceiling Fan
+Air Conditioner
+Television
+Water Heater
+Washing Machine
+Refrigerator
+Living Room Light
+
+NEW
+
+Living Room Light
+Bedroom Light
+Kitchen Light
+Study Room Light
+Mini Fan
+
+The changes must apply everywhere:
+
+• Appliance cards
+• Dashboard
+• Appliance Control page
+• Analytics
+• History
+• Alerts
+• Database
+• APIs
+• Charts
+• Status indicators
+• Statistics
+• Any hardcoded values
+• Dummy data
+• Labels
+• Icons
+• Tables
+
+Remove the old appliance names completely.
+
+====================================================
+STEP 2
+UPDATE ICONS
+====================================================
+
+Use suitable icons.
+
+Living Room Light
+
+Light Bulb Icon
+
+Bedroom Light
+
+Light Bulb Icon
+
+Kitchen Light
+
+Light Bulb Icon
+
+Study Room Light
+
+Light Bulb Icon
+
+Mini Fan
+
+Fan Icon
+
+====================================================
+STEP 3
+ESP32 HARDWARE CONFIGURATION
+====================================================
+
+Use this exact GPIO mapping.
+
+OLED Display
+
+VCC -> 3.3V
+
+GND -> GND
+
+SDA -> GPIO21
+
+SCL -> GPIO22
+
+----------------------------------------------------
+
+Relay Module
+
+Relay VCC -> 5V
+
+Relay GND -> GND
+
+Relay IN1 -> GPIO13
+
+Living Room Light
+
+Relay IN2 -> GPIO12
+
+Bedroom Light
+
+Relay IN3 -> GPIO14
+
+Kitchen Light
+
+Relay IN4 -> GPIO27
+
+Study Room Light
+
+Relay IN5 -> GPIO26
+
+Mini Fan
+
+Relay IN6 -> GPIO25
+
+Reserved
+
+Relay IN7 -> GPIO33
+
+Reserved
+
+Relay IN8 -> GPIO32
+
+Reserved
+
+----------------------------------------------------
+
+Voltage Sensor
+
+VCC -> 3.3V
+
+GND -> GND
+
+OUT -> GPIO34
+
+----------------------------------------------------
+
+Current Sensor
+
+VCC -> 3.3V
+
+GND -> GND
+
+OUT -> GPIO35
+
+====================================================
+STEP 4
+CREATE ESP32 FIRMWARE
+====================================================
+
+Generate complete Arduino firmware.
+
+Create:
+
+main.cpp
+
+wifi_manager.cpp
+
+wifi_manager.h
+
+sensor_manager.cpp
+
+sensor_manager.h
+
+relay_manager.cpp
+
+relay_manager.h
+
+oled_manager.cpp
+
+oled_manager.h
+
+api_client.cpp
+
+api_client.h
+
+config.h
+
+Firmware Requirements
+
+Connect ESP32 to WiFi.
+
+Reconnect automatically.
+
+Read sensors.
+
+Calculate
+
+Voltage
+
+Current
+
+Power
+
+Energy
+
+Display values on OLED.
+
+====================================================
+STEP 5
+CONNECT TO BACKEND
+====================================================
+
+Every 5 seconds
+
+POST
+
+/api/readings
+
+JSON
+
+{
+
+"deviceId":"esp32_001",
+
+"voltage":230,
+
+"current":0.82,
+
+"power":188,
+
+"energy":3.12,
+
+"timestamp":"..."
+
+}
+
+====================================================
+STEP 6
+APPLIANCE CONTROL
+====================================================
+
+The React application already has Appliance Control.
+
+Do NOT redesign it.
+
+When user clicks ON
+
+Living Room Light
+
+Bedroom Light
+
+Kitchen Light
+
+Study Room Light
+
+Mini Fan
+
+The backend must save the command.
+
+ESP32 should poll
+
+GET
+
+/api/commands/esp32_001
+
+every 1 second.
+
+Relay Mapping
+
+Relay1
+
+GPIO13
+
+Living Room Light
+
+Relay2
+
+GPIO12
+
+Bedroom Light
+
+Relay3
+
+GPIO14
+
+Kitchen Light
+
+Relay4
+
+GPIO27
+
+Study Room Light
+
+Relay5
+
+GPIO26
+
+Mini Fan
+
+Relay6
+
+GPIO25
+
+Reserved
+
+Relay7
+
+GPIO33
+
+Reserved
+
+Relay8
+
+GPIO32
+
+Reserved
+
+When command received
+
+GPIO HIGH
+
+Relay ON
+
+When OFF
+
+GPIO LOW
+
+Relay OFF
+
+After execution
+
+POST
+
+/api/commandAck
+
+====================================================
+STEP 7
+DATABASE
+====================================================
+
+Use the existing Neon PostgreSQL database.
+
+Do NOT create another database.
+
+Store every sensor reading.
+
+Store relay status.
+
+Store appliance status.
+
+Store alerts.
+
+Store prediction history.
+
+Use existing schema.
+
+====================================================
+STEP 8
+REPLACE DUMMY DATA
+====================================================
+
+Wherever the application currently displays dummy appliance status or dummy readings, replace them with live data from the Neon database.
+
+Keep the same UI.
+
+====================================================
+STEP 9
+ALERTS
+====================================================
+
+Generate alerts automatically for:
+
+High Voltage
+
+Low Voltage
+
+High Current
+
+High Power
+
+Communication Failure
+
+Device Offline
+
+Store alerts in database.
+
+Display in existing Alerts page.
+
+====================================================
+STEP 10
+ML MODEL
+====================================================
+
+I will upload my trained model later.
+
+Do NOT create a machine learning model.
+
+Do NOT train a model.
+
+Prepare the backend so I can later upload:
+
+bill_prediction_model.pkl
+
+scaler.pkl (if required)
+
+features.json
+
+Create an integration point that loads these files and uses the latest sensor readings from Neon PostgreSQL to generate bill predictions.
+
+====================================================
+STEP 11
+QUALITY
+====================================================
+
+Use production-ready code.
+
+Use async functions.
+
+Handle WiFi failures.
+
+Handle API failures.
+
+Handle sensor failures.
+
+Avoid blocking delay().
+
+Use millis() timers.
+
+Comment every important function.
+
+Do not break existing features.
+
+Keep the current project architecture.
+
+Return complete working code ready for deployment.

@@ -9,6 +9,7 @@ import {
   doublePrecision,
   date,
   uniqueIndex,
+  index,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
@@ -41,6 +42,8 @@ export const appliancesTable = pgTable("appliances", {
   isOn: boolean("is_on").notNull().default(false),
   powerW: real("power_w").notNull(),
   iconType: text("icon_type").notNull().default("plug"),
+  relayPin: integer("relay_pin"),          // GPIO pin for this appliance's relay
+  relayNumber: integer("relay_number"),    // Relay number 1–8
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
@@ -76,13 +79,17 @@ export const devicesTable = pgTable("devices", {
 
 export type Device = typeof devicesTable.$inferSelect;
 
-/** Raw power readings — every 30-60 s from the ESP32 */
+/** Raw power readings — every 5 s from the ESP32 */
 export const readingsTable = pgTable("readings", {
   id: serial("id").primaryKey(),
   deviceId: integer("device_id").notNull().references(() => devicesTable.id),
   powerWatts: doublePrecision("power_watts").notNull(),
+  voltageV: doublePrecision("voltage_v"),
+  currentA: doublePrecision("current_a"),
+  energyKwh: doublePrecision("energy_kwh"),
   recordedAt: timestamp("recorded_at").defaultNow().notNull(),
-});
+},
+(t) => [index("readings_device_recorded_idx").on(t.deviceId, t.recordedAt)]);
 
 export type Reading = typeof readingsTable.$inferSelect;
 
@@ -99,6 +106,25 @@ export const dailyUsageTable = pgTable(
 );
 
 export type DailyUsage = typeof dailyUsageTable.$inferSelect;
+
+/**
+ * Commands sent from the dashboard to the ESP32.
+ * ESP32 polls GET /api/commands/:deviceKey, executes the command,
+ * then acknowledges via POST /api/commandAck.
+ */
+export const commandsTable = pgTable("commands", {
+  id: serial("id").primaryKey(),
+  deviceKey: text("device_key").notNull(),
+  applianceId: text("appliance_id").notNull().references(() => appliancesTable.id),
+  relayNumber: integer("relay_number").notNull(),
+  command: text("command").notNull(),       // 'ON' | 'OFF'
+  acknowledged: boolean("acknowledged").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  executedAt: timestamp("executed_at"),
+},
+(t) => [index("commands_device_ack_idx").on(t.deviceKey, t.acknowledged)]);
+
+export type Command = typeof commandsTable.$inferSelect;
 
 /** Every bill prediction the model makes, logged for predicted-vs-actual comparison */
 export const predictionsTable = pgTable("predictions", {

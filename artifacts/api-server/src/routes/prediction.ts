@@ -48,7 +48,7 @@ function computePrediction(
   const willExceedBudget = predictedBillInr > targetBudgetInr;
 
   const tip = willExceedBudget
-    ? `You are likely to exceed your budget by ₹${(predictedBillInr - targetBudgetInr).toFixed(0)}. Consider reducing AC usage by 1-2 hours daily.`
+    ? `You are likely to exceed your budget by ₹${(predictedBillInr - targetBudgetInr).toFixed(0)}. Switch off lights and the fan in unoccupied rooms to reduce consumption.`
     : `Great job! You are on track to stay within budget. Keep up the current usage pattern.`;
 
   return {
@@ -153,7 +153,7 @@ router.get("/prediction/current", async (req, res): Promise<void> => {
     if (prevMonthKwh === 0) prevMonthKwh = 114;
     if (avgDailyKwh === 0) avgDailyKwh = 8.4;
 
-    const result = computePrediction(prevMonthKwh, currentMonthKwh, avgDailyKwh, 7, budget, tariff);
+    const result = computePrediction(prevMonthKwh, currentMonthKwh, avgDailyKwh, 5, budget, tariff);
 
     // Log prediction
     if (device) {
