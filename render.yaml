@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: smart-energy-api
+    env: node
+    region: oregon
+    plan: free
+
+    # Render clones the repo root; build and start from there
+    rootDir: .
+    buildCommand: "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build"
+    startCommand: "pnpm --filter @workspace/api-server run start"
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        fromService:
+          type: web
+          name: smart-energy-api
+          property: port
+      - key: NEON_DATABASE_URL
+        sync: false   # set manually in Render dashboard
+      - key: CORS_ORIGIN
+        sync: false   # set to your Vercel frontend URL
