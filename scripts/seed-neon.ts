@@ -16,13 +16,11 @@ async function run() {
     await client.query(`
       INSERT INTO appliances (id, name, location, is_on, power_w, icon_type, updated_at)
       VALUES
-        ('ac-living',      'Air Conditioner',  'Living Room',  false, 1800, 'wind',    NOW()),
-        ('fridge-kitchen', 'Refrigerator',     'Kitchen',      true,  120,  'box',     NOW()),
-        ('fan-living',     'Ceiling Fan',      'Living Room',  true,  75,   'wind',    NOW()),
-        ('light-living',   'Living Room Light','Living Room',  true,  18,   'zap',     NOW()),
-        ('tv-living',      'Television',       'Living Room',  false, 150,  'tv',      NOW()),
-        ('washer-utility', 'Washing Machine',  'Utility Area', false, 500,  'washing-machine', NOW()),
-        ('heater-bedroom', 'Water Heater',     'Bedroom',      false, 2000, 'flame',   NOW())
+        ('light-living',  'Living Room Light', 'Living Room',  false, 10, 'light', NOW()),
+        ('light-bedroom', 'Bedroom Light',      'Bedroom',      false, 10, 'light', NOW()),
+        ('light-kitchen', 'Kitchen Light',      'Kitchen',      false, 10, 'light', NOW()),
+        ('light-sitting', 'Sitting Area Light', 'Sitting Area', false, 10, 'light', NOW()),
+        ('fan-living',    'Mini Fan',           'Living Room',  false, 35, 'fan',   NOW())
       ON CONFLICT (id) DO NOTHING
     `);
     console.log("✓ Appliances seeded");
