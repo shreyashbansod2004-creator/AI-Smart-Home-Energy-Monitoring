@@ -1,0 +1,262 @@
+# Prompt
+
+Analyze my entire project and prepare it for **split deployment** using:
+
+* **Frontend:** Vercel
+* **Backend:** Render
+* **Database:** Neon PostgreSQL
+
+This project already works locally. Your goal is to make it deploy successfully **without changing the application's behavior**.
+
+---
+
+# Highest Priority Rules
+
+These rules override everything else.
+
+* **Do NOT change any application logic.**
+* **Do NOT redesign the UI.**
+* **Do NOT change any animations.**
+* **Do NOT change any styling.**
+* **Do NOT change any API endpoints, request bodies, or response formats.**
+* **Do NOT change any database schema or queries.**
+* **Do NOT change the ML model or prediction logic.**
+* **Do NOT change ESP32 compatibility or API communication.**
+* **Do NOT rename files or folders unless absolutely required for deployment.**
+* **Do NOT remove or disable any existing feature.**
+* **Do NOT refactor unrelated code.**
+* **Do NOT optimize code that already works.**
+* **Do NOT upgrade package versions unless deployment cannot succeed without it.**
+
+The application must behave **exactly the same** after your changes.
+
+---
+
+# Existing Features That MUST Continue Working
+
+Verify and preserve every existing feature.
+
+This includes (but is not limited to):
+
+* Dashboard
+* Appliance Cards
+* Appliance ON/OFF buttons
+* Appliance status updates
+* Energy monitoring
+* Charts
+* Graphs
+* History
+* Alerts
+* AI prediction
+* Settings
+* Navigation
+* Sidebar
+* Navbar
+* Animations
+* Loading states
+* Icons
+* Theme
+* Responsive layout
+* All API communication
+* All existing pages
+
+If any of these stop working after deployment-related changes, restore them.
+
+---
+
+# Appliance Cards
+
+Currently the appliance cards are missing or not rendering correctly.
+
+Restore them exactly as before.
+
+Requirements:
+
+* All appliance cards must be visible.
+* ON/OFF buttons must work.
+* Status indicators must work.
+* Icons must display.
+* Animations must remain unchanged.
+* Existing styling must remain unchanged.
+* Do not redesign the cards.
+
+---
+
+# Missing Features
+
+One or more features disappeared after deployment-related modifications.
+
+Find the exact root cause.
+
+Restore every missing feature without changing the behavior of the application.
+
+---
+
+# Render Compatibility
+
+Prepare the backend for Render.
+
+Only perform deployment-related changes such as:
+
+* Use
+
+```js
+process.env.PORT || 5000
+```
+
+* Verify package.json scripts
+* Verify pnpm workspace
+* Verify environment variables
+* Create or update `.env.example`
+* Configure production safely
+* Configure CORS using environment variables
+* Create `render.yaml` only if needed
+
+Do not change business logic.
+
+---
+
+# Vercel Compatibility
+
+Prepare the frontend for Vercel.
+
+Requirements:
+
+* Frontend must communicate with the Render backend using environment variables.
+* Do not hardcode API URLs.
+* Use the existing environment variable if one already exists.
+* Do not rename environment variables unless absolutely necessary.
+* Ensure production and development both work correctly.
+
+---
+
+# API
+
+Do NOT modify:
+
+* Routes
+* Request bodies
+* Response bodies
+* Authentication
+* Authorization
+* Business logic
+
+The API must behave exactly as before.
+
+---
+
+# Database
+
+Do NOT modify:
+
+* Tables
+* Schema
+* Queries
+* Relations
+* Models
+
+Only ensure production environment variables work.
+
+---
+
+# ML Model
+
+Do NOT change:
+
+* Prediction logic
+* Model loading
+* Features
+* Training
+* Outputs
+
+Only ensure deployment compatibility if required.
+
+---
+
+# ESP32
+
+Do NOT change:
+
+* API endpoints
+* Payload format
+* Device compatibility
+* Communication protocol
+
+The firmware must continue working without modification.
+
+---
+
+# Deployment
+
+Since this Replit project is already connected to my GitHub account:
+
+After all required deployment changes are complete:
+
+1. Verify the project builds successfully.
+2. Verify the frontend builds successfully.
+3. Verify the backend builds successfully.
+4. Verify there are no build errors.
+5. Commit all deployment-related changes.
+6. Push the changes to the **existing GitHub repository**.
+7. Do **NOT** create a new repository.
+8. Do **NOT** delete the existing repository.
+9. Keep the existing Git history.
+
+---
+
+# Before Making Any Change
+
+For every proposed modification:
+
+Ask yourself:
+
+"Is this change strictly required for deployment or to restore missing functionality?"
+
+If the answer is **No**, do not change it.
+
+---
+
+# Final Verification
+
+Before pushing to GitHub, verify that:
+
+* All appliance cards are visible.
+* ON/OFF buttons work.
+* All animations still work.
+* Every page is present.
+* Every feature works.
+* API works.
+* Database connection works (when environment variables are configured).
+* Frontend builds.
+* Backend builds.
+* Render deployment is ready.
+* Vercel deployment is ready.
+
+---
+
+# Final Report
+
+Provide:
+
+1. Root cause of every issue found.
+2. Every file changed.
+3. Every line changed.
+4. Why each change was necessary.
+5. Confirmation that no application functionality was altered.
+6. Confirmation that UI and animations remain unchanged.
+7. Confirmation that appliance cards and all features were restored.
+8. Confirmation that the project was committed and pushed to the **existing GitHub repository**.
+9. The exact Render deployment settings:
+
+   * Root Directory
+   * Build Command
+   * Start Command
+   * Environment Variables
+10. The exact Vercel deployment settings:
+
+* Root Directory
+* Build Command
+* Output Directory
+* Environment Variables
+
+The objective is to make the project deploy successfully on **Render (backend)** and **Vercel (frontend)** while preserving **100% of the application's existing functionality, UI, animations, appliance cards, and features**, and then push those changes to the existing GitHub repository.
