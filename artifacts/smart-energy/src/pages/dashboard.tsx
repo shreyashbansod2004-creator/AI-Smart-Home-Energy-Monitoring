@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Zap, Activity, Calendar, IndianRupee, ChevronRight, AlertTriangle } from 'lucide-react';
+import { Zap, Activity, Calendar, IndianRupee } from 'lucide-react';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import { PowerGauge } from '@/components/dashboard/power-gauge';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,6 @@ import {
   useGetLiveMetrics,
   useGetEnergyConsumption,
   useGetAppliances,
-  useGetAlerts,
   getGetDashboardSummaryQueryKey,
   getGetLiveMetricsQueryKey,
   useTurnAllOff,
@@ -40,8 +39,6 @@ export default function Dashboard() {
 
   const { data: appliances } = useGetAppliances();
 
-  const { data: alerts } = useGetAlerts();
-
   const turnAllOff = useTurnAllOff();
   const toggleAppliance = useToggleAppliance();
 
@@ -65,7 +62,6 @@ export default function Dashboard() {
   };
 
   const activeAppliances = appliances?.filter((a) => a.isOn).slice(0, 3) || [];
-  const recentAlerts = alerts?.filter((a) => !a.isDismissed).slice(0, 3) || [];
 
   if (summaryLoading) {
     return (
@@ -196,92 +192,36 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Bottom Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Appliances Status */}
-        <div className="bg-card border border-card-border rounded-xl p-6 shadow-md">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">Appliances Status</h2>
-            <Link href="/appliances" className="text-sm text-primary hover:underline">
-              View All
-            </Link>
-          </div>
-          <div className="space-y-3">
-            {activeAppliances.map((appliance) => (
-              <div key={appliance.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{appliance.name}</p>
-                  <p className="text-xs text-muted-foreground">{appliance.location}</p>
-                </div>
-                <div className="text-right">
-                  <Badge variant="outline" className="bg-primary/20 text-primary border-primary/30">
-                    ON
-                  </Badge>
-                  <p className="text-xs text-muted-foreground mt-1">{appliance.powerW} W</p>
-                </div>
-              </div>
-            ))}
-            {activeAppliances.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">No active appliances</p>
-            )}
-          </div>
-          <Button onClick={handleTurnAllOff} variant="outline" className="w-full mt-4" disabled={turnAllOff.isPending}>
-            Turn Off All
-          </Button>
-        </div>
-
-        {/* Bill Estimation */}
-        <div className="bg-card border border-card-border rounded-xl p-6 shadow-md">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">Bill Estimation & Prediction</h2>
-          </div>
-          <div className="text-center py-4">
-            <p className="text-sm text-muted-foreground mb-2">Estimated Bill</p>
-            <p className="text-4xl font-bold text-foreground">₹{summary?.estimatedBillInr.toLocaleString() || 0}</p>
-            <p className="text-xs text-muted-foreground mt-2">July 2025</p>
-          </div>
-          <div className="mt-6 space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Current usage</span>
-              <span className="font-medium text-foreground">{summary?.monthEnergyKwh.toFixed(1)} kWh</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Active appliances</span>
-              <span className="font-medium text-foreground">
-                {summary?.activeApplianceCount}/{summary?.totalApplianceCount}
-              </span>
-            </div>
-          </div>
-          <Link href="/prediction">
-            <Button variant="outline" className="w-full mt-4">
-              View Prediction <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
+      {/* Appliances Status */}
+      <div className="bg-card border border-card-border rounded-xl p-6 shadow-md">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-foreground">Appliances Status</h2>
+          <Link href="/appliances" className="text-sm text-primary hover:underline">
+            View All
           </Link>
         </div>
-
-        {/* Alerts */}
-        <div className="bg-card border border-card-border rounded-xl p-6 shadow-md">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">Alerts</h2>
-            <Link href="/alerts" className="text-sm text-primary hover:underline">
-              View All
-            </Link>
-          </div>
-          <div className="space-y-3">
-            {recentAlerts.map((alert) => (
-              <div key={alert.id} className="flex gap-3 p-3 rounded-lg bg-muted/50">
-                <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">{alert.title}</p>
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{alert.message}</p>
-                </div>
+        <div className="space-y-3">
+          {activeAppliances.map((appliance) => (
+            <div key={appliance.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+              <div>
+                <p className="text-sm font-medium text-foreground">{appliance.name}</p>
+                <p className="text-xs text-muted-foreground">{appliance.location}</p>
               </div>
-            ))}
-            {recentAlerts.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">No active alerts</p>
-            )}
-          </div>
+              <div className="text-right">
+                <Badge variant="outline" className="bg-primary/20 text-primary border-primary/30">
+                  ON
+                </Badge>
+                <p className="text-xs text-muted-foreground mt-1">{appliance.powerW} W</p>
+              </div>
+            </div>
+          ))}
+          {activeAppliances.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-8">No active appliances</p>
+          )}
         </div>
+        <Button onClick={handleTurnAllOff} variant="outline" className="w-full mt-4" disabled={turnAllOff.isPending}>
+          Turn Off All
+        </Button>
       </div>
     </div>
   );
