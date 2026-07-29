@@ -1,0 +1,92 @@
+Analyze my project and make one small UI change only.
+
+IMPORTANT RULES
+
+- Do NOT redesign the UI.
+- Do NOT change the layout except for the requested change.
+- Do NOT change animations.
+- Do NOT change application logic.
+- Do NOT change API endpoints.
+- Do NOT change backend code.
+- Do NOT change database schema or queries.
+- Do NOT change the ML model or prediction logic.
+- Do NOT change ESP32 compatibility.
+- Do NOT change deployment configuration.
+- Do NOT refactor unrelated code.
+- Do NOT optimize unrelated code.
+- Do NOT modify any other page.
+
+The application is working correctly. I only want to simplify the Dashboard (Home page).
+
+## Required Change
+
+On the **Dashboard (Home page)**, remove these sections:
+
+- Bill Estimation & Prediction
+- Alerts
+
+These two sections should **NOT** be visible on the Dashboard anymore.
+
+Also remove any related "View All" or "View Prediction" buttons that belong to these two sections on the Dashboard.
+
+## Keep Everything Else
+
+Do NOT remove or modify:
+
+- Current Power card
+- Today's Energy card
+- Monthly Energy card
+- Estimated Monthly Bill summary card at the top
+- Current Usage Overview gauge
+- Energy Consumption chart
+- Appliances Status section
+- Sidebar
+- Navbar
+- Device Status
+- Logout
+- All animations
+- All styling
+- All spacing (adjust the layout naturally after removing the two cards)
+- Any other Dashboard components
+
+## Important
+
+The Bill Prediction page must still work from the sidebar.
+
+The Alerts page must still work from the sidebar.
+
+I only want those sections removed from the Dashboard preview. They should remain fully functional when opened from the sidebar.
+
+## Verification
+
+Before finishing, verify:
+
+- Dashboard loads successfully.
+- Dashboard no longer shows the Bill Estimation & Prediction section.
+- Dashboard no longer shows the Alerts section.
+- Bill Prediction page still works.
+- Alerts page still works.
+- Appliance cards still work.
+- All existing features continue to work.
+- No application logic has changed.
+- No API behavior has changed.
+- No deployment compatibility has changed.
+
+## GitHub
+
+After verifying everything works:
+
+1. Commit only these Dashboard UI changes.
+2. Push the changes to the existing GitHub repository.
+3. Do NOT create a new repository.
+4. Keep the existing Git history.
+
+## Final Report
+
+Provide:
+
+- Files changed.
+- Exactly what was changed.
+- Confirmation that only the Dashboard was modified.
+- Confirmation that Bill Prediction and Alerts pages still work from the sidebar.
+- Confirmation that the changes were successfully committed and pushed to the existing GitHub repository.

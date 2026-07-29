@@ -1,0 +1,101 @@
+Analyze my project and update the dashboard appliances to match my actual hardware setup.
+
+IMPORTANT RULES
+
+- Do NOT redesign the UI.
+- Do NOT change the layout.
+- Do NOT change animations.
+- Do NOT change application logic.
+- Do NOT change API endpoints.
+- Do NOT change database schema or queries.
+- Do NOT change the ML model or prediction logic.
+- Do NOT change ESP32 API compatibility.
+- Do NOT change deployment configuration for Render or Vercel.
+- Do NOT refactor unrelated code.
+- Do NOT optimize unrelated code.
+- Do NOT remove any existing functionality.
+
+The application already works correctly. Your task is ONLY to update the appliance configuration to match my real hardware while preserving all existing functionality.
+
+Replace the existing appliances with the following:
+
+1. Living Room Light
+   - Type: Light
+   - Location: Living Room
+
+2. Bedroom Light
+   - Type: Light
+   - Location: Bedroom
+
+3. Kitchen Light
+   - Type: Light
+   - Location: Kitchen
+
+4. Sitting Area Light
+   - Type: Light
+   - Location: Sitting Area
+
+5. Mini Fan
+   - Type: Fan
+   - Location: Living Room
+
+Remove the old appliance names such as:
+
+- Television
+- Air Conditioner
+- Refrigerator
+- Washing Machine
+- Water Heater
+- Ceiling Fan
+
+These should no longer appear on the dashboard.
+
+Requirements
+
+- Use a light bulb icon for all four lights.
+- Use a fan icon for the Mini Fan.
+- Keep the same appliance card design.
+- Keep the same card animations.
+- Keep the same ON/OFF toggle behavior.
+- Keep the same spacing and layout.
+- Keep the same dashboard appearance.
+- Keep all energy statistics working.
+- Keep API communication unchanged.
+- Keep ESP32 compatibility unchanged.
+
+If appliance IDs are used internally by the backend or ESP32, update only the display names, icons, locations, and mapping as needed without breaking existing communication.
+
+Verify after making the changes:
+
+- Dashboard loads successfully.
+- All five appliance cards are visible.
+- Living Room Light appears.
+- Bedroom Light appears.
+- Kitchen Light appears.
+- Sitting Area Light appears.
+- Mini Fan appears.
+- ON/OFF buttons work.
+- Animations work.
+- No other page or feature is broken.
+- Render deployment compatibility is preserved.
+- Vercel deployment compatibility is preserved.
+
+After verification:
+
+1. Commit only the required changes.
+2. Push the changes to the existing GitHub repository.
+3. Do NOT create a new repository.
+4. Do NOT overwrite unrelated commits.
+5. Keep the existing Git history.
+
+Finally provide:
+
+- Root cause (if any).
+- Files changed.
+- Exactly what was changed.
+- Why each change was made.
+- Confirmation that the dashboard matches my hardware.
+- Confirmation that all features still work.
+- Confirmation that the changes were successfully committed and pushed to the existing GitHub repository.
+
+Do not consider the task complete until the dashboard shows the correct five appliances, all functionality has been verified, and the changes have been pushed to GitHub.
