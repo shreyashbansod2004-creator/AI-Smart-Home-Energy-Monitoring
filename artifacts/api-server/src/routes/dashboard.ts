@@ -15,17 +15,6 @@ import {
 
 const router = Router();
 
-/** Fallback live watts when no DB readings exist */
-function simulatedWatts(): number {
-  const h = new Date().getHours();
-  let base = 300;
-  if (h >= 6 && h < 10) base = 700;
-  else if (h >= 10 && h < 14) base = 900;
-  else if (h >= 14 && h < 18) base = 1100;
-  else if (h >= 18 && h < 23) base = 1300;
-  return Math.round(base + (Math.random() - 0.5) * 200);
-}
-
 async function getDefaultDevice() {
   const [device] = await db.select().from(devicesTable).limit(1);
   return device ?? null;
@@ -36,7 +25,10 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
     const device = await getDefaultDevice();
 
     // ── Live power from latest reading ──────────────────────────────────────
-    let currentPowerW = simulatedWatts();
+    let currentPowerW = 0;
+    let voltageV = 0;
+    let currentA = 0;
+
     if (device) {
       const [latest] = await db
         .select()
@@ -44,12 +36,16 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
         .where(eq(readingsTable.deviceId, device.id))
         .orderBy(desc(readingsTable.recordedAt))
         .limit(1);
-      if (latest) currentPowerW = Math.round(latest.powerWatts);
+      if (latest) {
+        currentPowerW = Math.round(latest.powerWatts);
+        voltageV = latest.voltageV ?? 0;
+        currentA = latest.currentA ?? 0;
+      }
     }
 
     // ── Today's energy from dailyUsage ──────────────────────────────────────
     const todayStr = new Date().toISOString().slice(0, 10);
-    let todayEnergyKwh = parseFloat((currentPowerW / 1000 * 6).toFixed(2)); // fallback estimate
+    let todayEnergyKwh = 0;
     if (device) {
       const [todayRow] = await db
         .select()
@@ -148,8 +144,8 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
       todayEnergyKwh,
       monthEnergyKwh,
       estimatedBillInr,
-      voltageV: 232,
-      currentA: parseFloat((currentPowerW / 232).toFixed(2)),
+      voltageV,
+      currentA,
       powerFactorKw: parseFloat((currentPowerW / 1000).toFixed(2)),
       todayChangePercent,
       monthChangePercent,
@@ -173,6 +169,10 @@ router.get("/dashboard/live", async (req, res): Promise<void> => {
 
     // ── Last 20 readings for the sparkline ──────────────────────────────────
     let history: { time: string; powerW: number }[] = [];
+    let powerW = 0;
+    let voltageV = 0;
+    let currentA = 0;
+
     if (device) {
       const rows = await db
         .select()
@@ -181,40 +181,31 @@ router.get("/dashboard/live", async (req, res): Promise<void> => {
         .orderBy(desc(readingsTable.recordedAt))
         .limit(20);
 
-      history = rows.reverse().map((r) => {
+      const ordered = rows.reverse();
+      history = ordered.map((r) => {
         const t = r.recordedAt;
         return {
           time: `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}`,
           powerW: Math.round(r.powerWatts),
         };
       });
+
+      // Pull voltage and current from the latest reading
+      const latest = ordered.at(-1);
+      if (latest) {
+        powerW = Math.round(latest.powerWatts);
+        voltageV = latest.voltageV ?? 0;
+        currentA = latest.currentA ?? 0;
+      }
     }
 
-    // Fallback if no DB readings
-    if (history.length === 0) {
-      history = Array.from({ length: 20 }, (_, i) => {
-        const t = new Date(now.getTime() - (19 - i) * 5 * 60 * 1000);
-        const h = t.getHours();
-        let base = 300;
-        if (h >= 6 && h < 10) base = 700;
-        else if (h >= 10 && h < 14) base = 900;
-        else if (h >= 14 && h < 18) base = 1100;
-        else if (h >= 18 && h < 23) base = 1300;
-        return {
-          time: `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}`,
-          powerW: Math.round(base + (Math.random() - 0.5) * 200),
-        };
-      });
-    }
-
-    // Latest power
-    const powerW = history.at(-1)?.powerW ?? simulatedWatts();
+    // No readings: history stays empty and all metrics are 0 (device offline/not yet connected)
 
     const metrics = GetLiveMetricsResponse.parse({
       timestamp: now.toISOString(),
       powerW,
-      voltageV: 232,
-      currentA: parseFloat((powerW / 232).toFixed(2)),
+      voltageV,
+      currentA,
       frequency: 50,
       history,
     });

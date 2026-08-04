@@ -23,20 +23,6 @@ async function getDefaultDevice() {
   return device ?? null;
 }
 
-// ── Fallback generators (used when DB has no data for that period) ──────────
-
-function fallbackHourly(): { label: string; energyKwh: number; date: string }[] {
-  const today = new Date().toISOString().slice(0, 10);
-  return Array.from({ length: 24 }, (_, h) => {
-    let base = 0.3;
-    if (h >= 6 && h < 10) base = 0.8;
-    else if (h >= 10 && h < 14) base = 1.0;
-    else if (h >= 14 && h < 18) base = 1.2;
-    else if (h >= 18 && h < 23) base = 1.5;
-    return { label: `${String(h).padStart(2, "0")}:00`, energyKwh: parseFloat((base + (Math.random() - 0.4) * 0.3).toFixed(2)), date: today };
-  });
-}
-
 // ── /energy/consumption ─────────────────────────────────────────────────────
 
 router.get("/energy/consumption", async (req, res): Promise<void> => {
@@ -76,9 +62,8 @@ router.get("/energy/consumption", async (req, res): Promise<void> => {
           energyKwh: hourMap.get(h) ?? 0,
           date: today,
         }));
-      } else {
-        data = fallbackHourly();
       }
+      // No device: return empty — no readings yet
     } else if (period === "week") {
       // Last 7 days from dailyUsage
       if (device) {
@@ -101,17 +86,12 @@ router.get("/energy/consumption", async (req, res): Promise<void> => {
           const dateStr = d.toISOString().slice(0, 10);
           return {
             label: DAYS[d.getDay()],
-            energyKwh: parseFloat(Number(kwMap.get(dateStr) ?? (12 + Math.random() * 8)).toFixed(2)),
+            energyKwh: parseFloat(Number(kwMap.get(dateStr) ?? 0).toFixed(2)),
             date: dateStr,
           };
         });
-      } else {
-        const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        data = Array.from({ length: 7 }, (_, i) => {
-          const d = new Date(now.getTime() - (6 - i) * 86400000);
-          return { label: DAYS[d.getDay()], energyKwh: parseFloat((12 + Math.random() * 8).toFixed(2)), date: d.toISOString().slice(0, 10) };
-        });
       }
+      // No device: return empty
     } else if (period === "month") {
       // All days in current month from dailyUsage
       const firstOfMonth = `${now.toISOString().slice(0, 7)}-01`;
@@ -135,22 +115,12 @@ router.get("/energy/consumption", async (req, res): Promise<void> => {
           const dateStr = d.toISOString().slice(0, 10);
           return {
             label: `${i + 1} ${MONTHS[now.getMonth()]}`,
-            energyKwh: parseFloat(Number(kwMap.get(dateStr) ?? (10 + Math.random() * 8)).toFixed(2)),
+            energyKwh: parseFloat(Number(kwMap.get(dateStr) ?? 0).toFixed(2)),
             date: dateStr,
           };
         });
-      } else {
-        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-        const today = now.getDate();
-        data = Array.from({ length: Math.min(today, daysInMonth) }, (_, i) => {
-          const d = new Date(now.getFullYear(), now.getMonth(), i + 1);
-          return {
-            label: `${i + 1} ${MONTHS[now.getMonth()]}`,
-            energyKwh: parseFloat((10 + Math.random() * 8).toFixed(2)),
-            date: d.toISOString().slice(0, 10),
-          };
-        });
       }
+      // No device: return empty
     } else if (period === "year") {
       // Last 12 months aggregated from dailyUsage
       if (device) {
@@ -176,16 +146,12 @@ router.get("/energy/consumption", async (req, res): Promise<void> => {
           const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
           return {
             label: MONTHS[d.getMonth()],
-            energyKwh: kwMap.get(key) ?? parseFloat((80 + Math.random() * 80).toFixed(2)),
+            energyKwh: kwMap.get(key) ?? 0,
             date: d.toISOString().slice(0, 10),
           };
         });
-      } else {
-        data = Array.from({ length: 12 }, (_, i) => {
-          const d = new Date(now.getFullYear(), i, 1);
-          return { label: MONTHS[i], energyKwh: parseFloat((80 + Math.random() * 80).toFixed(2)), date: d.toISOString().slice(0, 10) };
-        });
       }
+      // No device: return empty
     }
 
     res.json(GetEnergyConsumptionResponse.parse(data));
@@ -238,7 +204,7 @@ router.get("/energy/analytics", async (req, res): Promise<void> => {
     // ── Weekly trend from dailyUsage ──────────────────────────────────────
     const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     let weeklyTrend: { label: string; energyKwh: number; date: string }[] = [];
-    let avgDailyKwh = 8.4;
+    let avgDailyKwh = 0;
 
     if (device) {
       const sevenDaysAgo = new Date(now.getTime() - 6 * 86400000).toISOString().slice(0, 10);
@@ -252,7 +218,7 @@ router.get("/energy/analytics", async (req, res): Promise<void> => {
       weeklyTrend = Array.from({ length: 7 }, (_, i) => {
         const d = new Date(now.getTime() - (6 - i) * 86400000);
         const dateStr = d.toISOString().slice(0, 10);
-        const kwh = kwMap.get(dateStr) ?? (12 + Math.random() * 8);
+        const kwh = kwMap.get(dateStr) ?? 0;
         return { label: DAYS[d.getDay()], energyKwh: parseFloat(Number(kwh).toFixed(2)), date: dateStr };
       });
 
@@ -260,12 +226,8 @@ router.get("/energy/analytics", async (req, res): Promise<void> => {
       if (validDays.length > 0) {
         avgDailyKwh = parseFloat((validDays.reduce((s, d) => s + d.energyKwh, 0) / validDays.length).toFixed(2));
       }
-    } else {
-      weeklyTrend = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(now.getTime() - (6 - i) * 86400000);
-        return { label: DAYS[d.getDay()], energyKwh: parseFloat((12 + Math.random() * 8).toFixed(2)), date: d.toISOString().slice(0, 10) };
-      });
     }
+    // No device: weeklyTrend stays empty, avgDailyKwh stays 0
 
     // ── Hourly pattern from readings ──────────────────────────────────────
     let hourlyPattern: { label: string; energyKwh: number; date: string }[] = [];
@@ -289,9 +251,8 @@ router.get("/energy/analytics", async (req, res): Promise<void> => {
         energyKwh: hourMap.get(h) ?? 0,
         date: today,
       }));
-    } else {
-      hourlyPattern = fallbackHourly();
     }
+    // No device: hourlyPattern stays empty
 
     // ── Appliance-driven recommendations ────────────────────────────────────
     const appliances = await db.select().from(appliancesTable);
@@ -299,11 +260,17 @@ router.get("/energy/analytics", async (req, res): Promise<void> => {
     const highPower = appliances.filter((a) => a.powerW >= 100);
 
     // Efficiency score: based on avg daily usage (target 1–3 kWh for a lights+fan home)
-    const efficiencyScore = Math.max(40, Math.min(95, Math.round(100 - (avgDailyKwh - 1) * 8)));
+    const efficiencyScore = avgDailyKwh > 0
+      ? Math.max(40, Math.min(95, Math.round(100 - (avgDailyKwh - 1) * 8)))
+      : 100;
 
     // Peak hour detection from hourly pattern
-    const peakHour = hourlyPattern.reduce((max, h) => (h.energyKwh > max.energyKwh ? h : max), hourlyPattern[0]);
-    const lowHour = hourlyPattern.reduce((min, h) => (h.energyKwh < min.energyKwh ? h : min), hourlyPattern[0]);
+    const peakHour = hourlyPattern.length > 0
+      ? hourlyPattern.reduce((max, h) => (h.energyKwh > max.energyKwh ? h : max), hourlyPattern[0])
+      : null;
+    const lowHour = hourlyPattern.length > 0
+      ? hourlyPattern.reduce((min, h) => (h.energyKwh < min.energyKwh ? h : min), hourlyPattern[0])
+      : null;
 
     const recommendations = [];
     if (fan) {
@@ -312,7 +279,7 @@ router.get("/energy/analytics", async (req, res): Promise<void> => {
     if (highPower.length >= 3) {
       recommendations.push({ id: "rec-2", appliance: highPower[0].name, message: `${highPower.length} lights are on simultaneously. Switch off lights in unoccupied rooms to cut usage.`, savingInr: 50, severity: "warning" });
     }
-    if (avgDailyKwh < 2) {
+    if (avgDailyKwh > 0 && avgDailyKwh < 2) {
       recommendations.push({ id: "rec-3", appliance: "System", message: "Your energy usage is very low — great job! Continue switching off lights and the fan when leaving rooms.", savingInr: 0, severity: "info" });
     }
     if (recommendations.length === 0) {
@@ -321,8 +288,8 @@ router.get("/energy/analytics", async (req, res): Promise<void> => {
 
     const analytics = {
       efficiencyScore,
-      peakUsageHour: peakHour ? peakHour.label : "19:00",
-      lowestUsageHour: lowHour ? lowHour.label : "03:00",
+      peakUsageHour: peakHour ? peakHour.label : "N/A",
+      lowestUsageHour: lowHour ? lowHour.label : "N/A",
       avgDailyKwh,
       savingOpportunities: recommendations.map((r) => r.message),
       recommendations,

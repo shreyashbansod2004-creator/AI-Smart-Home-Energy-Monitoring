@@ -1,0 +1,269 @@
+You are a Senior Software Architect, IoT Engineer, Backend Engineer, Database Engineer, QA Engineer, and Full Stack Engineer.
+
+Your ONLY task is to remove fake telemetry from this project.
+
+DO NOT redesign anything.
+
+DO NOT refactor unrelated code.
+
+DO NOT optimize working code.
+
+DO NOT change the UI.
+
+DO NOT change the dashboard.
+
+DO NOT change the architecture.
+
+DO NOT change API contracts.
+
+DO NOT rename files.
+
+DO NOT remove existing features.
+
+DO NOT modify firmware unless absolutely necessary.
+
+=========================================================
+PROBLEM
+=========================================================
+
+This project is an AI Smart Home Energy Monitoring System.
+
+The dashboard MUST display ONLY real telemetry received from the ESP32.
+
+I do NOT want:
+
+❌ fake readings
+
+❌ demo readings
+
+❌ sample readings
+
+❌ mock telemetry
+
+❌ randomly generated values
+
+❌ simulated sensor values
+
+❌ placeholder telemetry
+
+❌ automatic sensor generation
+
+The ONLY valid source of sensor data must be:
+
+ESP32
+    ↓
+POST /api/readings
+    ↓
+Backend
+    ↓
+Database
+    ↓
+Dashboard
+
+No other code should ever create sensor readings.
+
+=========================================================
+TASK 1 — FIND EVERY SOURCE OF FAKE DATA
+=========================================================
+
+Search the ENTIRE project.
+
+Verify every place where sensor readings can be created.
+
+This includes:
+
+• Express routes
+
+• Dashboard routes
+
+• Background jobs
+
+• Scheduled tasks
+
+• Cron jobs
+
+• Utility functions
+
+• Seed scripts
+
+• Database initialization
+
+• Test helpers
+
+• Demo code
+
+• Mock code
+
+• Development-only code
+
+• Random number generators
+
+• Synthetic telemetry generators
+
+Do NOT assume previous reports are correct.
+
+Verify everything from the actual code.
+
+=========================================================
+TASK 2 — REMOVE ONLY FAKE TELEMETRY
+=========================================================
+
+If any code inserts fake sensor readings into:
+
+- readings
+- daily_usage
+- analytics
+- dashboard
+- live endpoints
+
+remove ONLY that fake telemetry generation.
+
+Do NOT remove legitimate seed data such as:
+
+✓ appliance definitions
+
+✓ default settings
+
+✓ alert templates
+
+✓ configuration data
+
+Only remove data that is pretending to be live sensor readings.
+
+=========================================================
+TASK 3 — VERIFY DATABASE
+=========================================================
+
+Inspect the database.
+
+Determine whether there are existing fake readings.
+
+If fake telemetry exists:
+
+Delete ONLY fake telemetry.
+
+Keep legitimate configuration tables intact.
+
+=========================================================
+TASK 4 — VERIFY OFFLINE BEHAVIOR
+=========================================================
+
+Simulate the ESP32 being offline.
+
+Verify:
+
+✓ No new readings are inserted.
+
+✓ No random values appear.
+
+✓ No synthetic telemetry is created.
+
+✓ readings table remains unchanged.
+
+✓ daily_usage is not updated from fake values.
+
+The dashboard should either:
+
+• display the last real reading
+
+OR
+
+• show that the device is offline.
+
+It must NEVER invent sensor values.
+
+=========================================================
+TASK 5 — VERIFY ONLINE BEHAVIOR
+=========================================================
+
+When the ESP32 sends:
+
+Voltage
+
+Current
+
+Power
+
+Energy
+
+verify that:
+
+✓ readings receives the data
+
+✓ daily_usage updates correctly
+
+✓ dashboard summary updates
+
+✓ live dashboard updates
+
+✓ history updates
+
+✓ analytics update
+
+✓ predictions continue working
+
+using ONLY real ESP32 data.
+
+=========================================================
+TASK 6 — VERIFY NO FAKE DATA REMAINS
+=========================================================
+
+Search the codebase again.
+
+Confirm there are NO remaining:
+
+generateRandom()
+
+Math.random()
+
+fakeReading
+
+demoReading
+
+mockReading
+
+sampleTelemetry
+
+syntheticReading
+
+placeholder telemetry
+
+test telemetry
+
+dashboard demo inserts
+
+or any equivalent implementation.
+
+=========================================================
+REPORT
+=========================================================
+
+Provide:
+
+1. Every file inspected.
+
+2. Every file modified.
+
+3. Every function modified.
+
+4. The exact code removed.
+
+5. Why it was removed.
+
+6. Confirmation that no fake telemetry remains anywhere in the project.
+
+7. Confirmation that ONLY real ESP32 readings can reach the dashboard.
+
+8. Confirmation that when the ESP32 is disconnected, NO new readings are generated.
+
+9. Confirmation that the dashboard either shows the last real reading or an offline state.
+
+10. Confirmation that no unrelated files were modified.
+
+=========================================================
+IMPORTANT
+=========================================================
+
+Do NOT push to GitHub until every verification above passes.
+
+If any fake telemetry still exists anywhere in the project, STOP and show me exactly where it is with file names and line numbers.

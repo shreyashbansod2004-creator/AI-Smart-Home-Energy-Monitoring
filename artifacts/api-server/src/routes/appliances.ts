@@ -17,7 +17,7 @@ const ESP32_DEVICE_KEY = "esp32_001";
 
 // Derived usage data (not stored in DB — computed from powerW)
 function deriveUsage(appliance: typeof appliancesTable.$inferSelect) {
-  const hoursToday = appliance.isOn ? 3.5 + Math.random() * 2 : Math.random() * 1.5;
+  const hoursToday = 0; // Real running hours require tracking from actual readings
   const todayUsageKwh = parseFloat(((appliance.powerW / 1000) * hoursToday).toFixed(2));
   const monthlyCostInr = parseFloat((todayUsageKwh * 30 * 8.5).toFixed(0));
   return {
@@ -29,7 +29,7 @@ function deriveUsage(appliance: typeof appliancesTable.$inferSelect) {
     todayUsageKwh,
     monthlyCostInr,
     iconType: appliance.iconType,
-    runningHoursToday: parseFloat(hoursToday.toFixed(1)),
+    runningHoursToday: hoursToday,
   };
 }
 
