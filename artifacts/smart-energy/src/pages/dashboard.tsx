@@ -12,6 +12,7 @@ import {
   useGetAppliances,
   getGetDashboardSummaryQueryKey,
   getGetLiveMetricsQueryKey,
+  getGetEnergyConsumptionQueryKey,
   useTurnAllOff,
   useToggleAppliance,
 } from '@workspace/api-client-react';
@@ -25,7 +26,7 @@ export default function Dashboard() {
   const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
 
   const { data: summary, isLoading: summaryLoading } = useGetDashboardSummary({
-    query: { queryKey: getGetDashboardSummaryQueryKey() },
+    query: { queryKey: getGetDashboardSummaryQueryKey(), refetchInterval: 10000 },
   });
 
   const { data: liveMetrics } = useGetLiveMetrics({
@@ -35,7 +36,7 @@ export default function Dashboard() {
     },
   });
 
-  const { data: energyData } = useGetEnergyConsumption({ period }, { query: { enabled: true } });
+  const { data: energyData } = useGetEnergyConsumption({ period }, { query: { enabled: true, queryKey: getGetEnergyConsumptionQueryKey({ period }) } });
 
   const { data: appliances } = useGetAppliances();
 

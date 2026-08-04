@@ -210,15 +210,6 @@ router.get("/dashboard/live", async (req, res): Promise<void> => {
     // Latest power
     const powerW = history.at(-1)?.powerW ?? simulatedWatts();
 
-    // Auto-insert a new reading into DB for real-time tracking
-    if (device) {
-      await db.insert(readingsTable).values({
-        deviceId: device.id,
-        powerWatts: powerW + (Math.random() - 0.5) * 50,
-        recordedAt: now,
-      });
-    }
-
     const metrics = GetLiveMetricsResponse.parse({
       timestamp: now.toISOString(),
       powerW,

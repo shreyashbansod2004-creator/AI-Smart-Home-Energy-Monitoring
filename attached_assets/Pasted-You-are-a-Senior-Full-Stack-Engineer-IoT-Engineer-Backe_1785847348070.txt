@@ -1,0 +1,390 @@
+You are a Senior Full Stack Engineer, IoT Engineer, Backend Engineer, Database Engineer, Software Architect, and QA Engineer.
+
+I have already completed a complete forensic analysis of this project.
+
+The previous analysis identified several root causes.
+
+HOWEVER:
+
+DO NOT assume the forensic report is automatically correct.
+
+=========================================================
+PHASE 1 - VERIFY THE ROOT CAUSES FIRST
+=========================================================
+
+Before modifying ANY code:
+
+1. Trace the complete data flow from:
+
+ESP32 Firmware
+        ↓
+POST /api/readings
+        ↓
+Backend
+        ↓
+Database (readings)
+        ↓
+Database (daily_usage)
+        ↓
+Dashboard APIs
+        ↓
+React Dashboard
+
+2. Verify every claimed root cause using the actual codebase.
+
+3. For every issue:
+
+• Confirm whether it really exists.
+
+• Show the exact file.
+
+• Show the exact function.
+
+• Explain why it happens.
+
+• Explain how you verified it.
+
+4. DO NOT trust my report.
+
+DO NOT trust previous AI analysis.
+
+DO NOT trust assumptions.
+
+Only trust the actual code.
+
+If you discover a different root cause supported by the code, explain it with evidence before changing anything.
+
+ONLY AFTER verification should you implement the minimum required fixes.
+
+=========================================================
+PROJECT
+=========================================================
+
+AI Smart Home Energy Monitoring System
+
+Technology Stack
+
+- ESP32 Firmware
+- Express.js + TypeScript Backend
+- PostgreSQL (Neon)
+- Drizzle ORM
+- React + Vite Frontend
+- Render Deployment
+
+=========================================================
+CURRENT STATUS
+=========================================================
+
+The ESP32 is working correctly.
+
+It successfully:
+
+✓ Connects to Wi-Fi
+
+✓ Connects to the backend
+
+✓ Sends readings successfully
+
+✓ Receives commands
+
+Render logs return HTTP 201 for POST /api/readings.
+
+Therefore ESP32 → Backend communication is working correctly.
+
+The dashboard also receives live API responses.
+
+The main problems are believed to be inside the backend logic and data flow, but you MUST verify this first.
+
+=========================================================
+VERIFIED PROBLEMS TO VERIFY
+=========================================================
+
+PROBLEM 1 (HIGHEST PRIORITY)
+
+Possible missing aggregation pipeline.
+
+Current suspected data flow:
+
+ESP32
+↓
+POST /api/readings
+↓
+readings table
+↓
+STOP
+
+Nothing updates the daily_usage table.
+
+Dashboard Summary
+
+Dashboard Analytics
+
+History
+
+Predictions
+
+Energy Statistics
+
+appear to read from daily_usage instead of readings.
+
+Verify whether this is actually true.
+
+If true:
+
+Implement the missing aggregation logic using the existing architecture.
+
+Do NOT redesign anything.
+
+=========================================================
+
+PROBLEM 2
+
+Possible missing aggregation logic.
+
+Current suspicion:
+
+✓ readings are inserted correctly.
+
+✓ daily_usage is queried.
+
+✗ daily_usage is never updated.
+
+Verify this before changing code.
+
+If confirmed:
+
+Implement only the missing logic.
+
+Requirements:
+
+• Do NOT remove endpoints.
+
+• Do NOT redesign APIs.
+
+• Do NOT change database schema unless absolutely necessary.
+
+• Preserve the existing architecture.
+
+=========================================================
+
+PROBLEM 3
+
+Possible fake readings.
+
+Verify whether:
+
+GET /api/dashboard/live
+
+creates synthetic readings inside the readings table.
+
+If this is true:
+
+Remove ONLY the fake insertion logic.
+
+Do NOT break the endpoint.
+
+=========================================================
+
+PROBLEM 4
+
+Relay commands repeat forever.
+
+Current observed behavior:
+
+Backend repeatedly sends:
+
+relay 6 -> OFF
+
+Firmware currently supports:
+
+RELAY_COUNT = 5
+
+Determine the actual root cause.
+
+Possible causes include:
+
+• incorrect appliance relay mapping
+
+• backend command queue
+
+• firmware acknowledgement logic
+
+Only fix the true cause.
+
+Do NOT redesign the command system.
+
+=========================================================
+
+PROBLEM 5
+
+Dashboard summary cards do not refresh automatically.
+
+Live metrics refresh correctly.
+
+Summary cards remain stale.
+
+Verify why.
+
+Fix only the refresh logic.
+
+Do NOT redesign the dashboard.
+
+=========================================================
+
+PROBLEM 6
+
+Sensor sanity checking.
+
+Current sensor sometimes reports impossible values like:
+
+165A
+
+while
+
+Voltage = 0V
+
+Power = 0W
+
+Verify whether firmware requires an upper sanity check.
+
+Only modify firmware if necessary.
+
+=========================================================
+IMPORTANT
+=========================================================
+
+DO NOT
+
+❌ Redesign the project
+
+❌ Refactor unrelated code
+
+❌ Optimize unrelated files
+
+❌ Change UI
+
+❌ Change dashboard layout
+
+❌ Change styling
+
+❌ Rename files
+
+❌ Move files
+
+❌ Replace architecture
+
+❌ Rewrite working APIs
+
+❌ Remove existing functionality
+
+❌ Change database schema unless absolutely required
+
+❌ Introduce unnecessary libraries
+
+Only change code directly related to verified bugs.
+
+=========================================================
+IMPLEMENTATION
+=========================================================
+
+After verification:
+
+Apply ONLY the minimum required changes.
+
+Keep every existing feature.
+
+Keep every API.
+
+Keep every UI component.
+
+Keep the project structure identical.
+
+=========================================================
+TESTING (MANDATORY)
+=========================================================
+
+After implementing the fixes:
+
+1. Build the backend.
+
+2. Build the frontend.
+
+3. Build the ESP32 firmware.
+
+4. Run the backend locally.
+
+5. Test every modified API endpoint.
+
+6. Verify that ESP32 readings reach the backend.
+
+7. Verify that readings are stored correctly.
+
+8. Verify that daily_usage updates automatically.
+
+9. Verify that Dashboard Summary displays live data.
+
+10. Verify that Dashboard History displays real readings.
+
+11. Verify that Analytics use live readings.
+
+12. Verify that fake readings are no longer generated.
+
+13. Verify that relay commands no longer repeat.
+
+14. Verify that existing APIs remain compatible.
+
+15. If any test fails, continue debugging until it passes.
+
+DO NOT stop after making code changes.
+
+Prove the fixes work.
+
+=========================================================
+IMPLEMENTATION REPORT
+=========================================================
+
+Provide a complete report including:
+
+1. Which suspected root causes were confirmed.
+
+2. Which suspected root causes were incorrect.
+
+3. Every modified file.
+
+4. Every modified function.
+
+5. Why each change was necessary.
+
+6. Database changes (if any).
+
+7. Firmware changes (if any).
+
+8. Whether I need to reflash the ESP32.
+
+9. Frontend changes (if any).
+
+10. Proof that the project builds successfully.
+
+11. Proof that the tests passed.
+
+12. Confirmation that:
+
+✓ Dashboard UI is unchanged.
+
+✓ APIs remain compatible.
+
+✓ Project architecture is unchanged.
+
+=========================================================
+GITHUB
+=========================================================
+
+DO NOT push anything to GitHub automatically.
+
+Wait for my approval after presenting:
+
+• the verification report,
+• the implementation report,
+• and the test results.
+
+Only after I explicitly approve should you commit and push the changes.

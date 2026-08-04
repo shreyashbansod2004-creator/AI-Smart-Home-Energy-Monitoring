@@ -102,10 +102,14 @@ void loop() {
   RelayCommand cmd = api.update(data);
 
   // 5. Execute any received command
-  if (cmd.valid && cmd.relayNum >= 1 && cmd.relayNum <= RELAY_COUNT) {
-    relays.set(cmd.relayNum, cmd.turnOn);
-
-    // Acknowledge execution back to backend
+  if (cmd.valid) {
+    if (cmd.relayNum >= 1 && cmd.relayNum <= RELAY_COUNT) {
+      relays.set(cmd.relayNum, cmd.turnOn);
+    } else {
+      Serial.printf("[Main] Relay %d out of range (max %d) — acknowledging without executing.\n",
+                    cmd.relayNum, RELAY_COUNT);
+    }
+    // Always acknowledge so the command is not repeated on the next poll
     bool acked = api.acknowledgeCommand(cmd.id, cmd.relayNum, cmd.turnOn);
     if (!acked) {
       Serial.printf("[Main] Ack failed for cmd %d — will retry next poll.\n", cmd.id);

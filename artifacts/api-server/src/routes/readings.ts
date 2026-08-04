@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { z } from "zod";
 import {
   db,
   devicesTable,
   readingsTable,
+  dailyUsageTable,
   alertsTable,
   settingsTable,
 } from "@workspace/db";
@@ -95,14 +96,59 @@ router.post("/readings", async (req, res): Promise<void> => {
       device = inserted;
     }
 
-    // Insert reading
-    await db.insert(readingsTable).values({
-      deviceId: device.id,
-      powerWatts: power,
-      voltageV: voltage ?? null,
-      currentA: current ?? null,
-      energyKwh: energy ?? null,
-      recordedAt: new Date(),
+    // ── Compute energy increment from elapsed time (accurate for any interval) ──
+    // Fetch the previous reading BEFORE inserting so we know the elapsed time.
+    const [prevReading] = await db
+      .select({ recordedAt: readingsTable.recordedAt, energyKwh: readingsTable.energyKwh })
+      .from(readingsTable)
+      .where(eq(readingsTable.deviceId, device.id))
+      .orderBy(desc(readingsTable.recordedAt))
+      .limit(1);
+
+    const now = new Date();
+    let energyIncrementKwh: number;
+    if (prevReading) {
+      const elapsedMs = now.getTime() - prevReading.recordedAt.getTime();
+      const elapsedH  = elapsedMs / 3_600_000;
+      if (elapsedMs >= 1_000 && elapsedMs <= 300_000) {
+        // Elapsed 1 s – 5 min: reliable interval; derive energy from power × time
+        energyIncrementKwh = (power / 1000) * elapsedH;
+      } else if (
+        energy !== undefined &&
+        prevReading.energyKwh !== null &&
+        energy > prevReading.energyKwh
+      ) {
+        // Cumulative firmware meter delta (handles any post interval or reboot guard)
+        energyIncrementKwh = energy - prevReading.energyKwh;
+      } else {
+        // Gap too large or no usable delta: fall back to fixed 5-second estimate
+        energyIncrementKwh = (power / 1000) * (5 / 3600);
+      }
+    } else {
+      // First reading for this device: use supplied cumulative energy or 5-second estimate
+      energyIncrementKwh = energy ?? (power / 1000) * (5 / 3600);
+    }
+
+    const todayStr = now.toISOString().slice(0, 10);
+
+    // ── Atomic: reading insert + daily_usage upsert ───────────────────────────
+    await db.transaction(async (tx) => {
+      await tx.insert(readingsTable).values({
+        deviceId: device.id,
+        powerWatts: power,
+        voltageV: voltage ?? null,
+        currentA: current ?? null,
+        energyKwh: energy ?? null,
+        recordedAt: now,
+      });
+
+      await tx
+        .insert(dailyUsageTable)
+        .values({ deviceId: device.id, usageDate: todayStr, energyKwh: energyIncrementKwh })
+        .onConflictDoUpdate({
+          target: [dailyUsageTable.deviceId, dailyUsageTable.usageDate],
+          set: { energyKwh: sql`${dailyUsageTable.energyKwh} + ${energyIncrementKwh}` },
+        });
     });
 
     // ── Auto-generate alerts based on thresholds ─────────────────────────────

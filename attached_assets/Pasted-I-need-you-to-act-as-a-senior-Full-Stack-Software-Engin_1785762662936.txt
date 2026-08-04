@@ -1,0 +1,225 @@
+I need you to act as a senior Full-Stack Software Engineer and Debugging Engineer.
+
+IMPORTANT:
+Do NOT redesign my project.
+Do NOT change the dashboard UI.
+Do NOT change the frontend design.
+Do NOT add new features.
+Do NOT refactor the project.
+Do NOT modify working functionality.
+
+Your ONLY goal is to identify the root cause of the bugs and fix them while keeping the project exactly as it is.
+
+========================================
+PROJECT DESCRIPTION
+========================================
+
+This project is an AI Smart Home Energy Monitoring System.
+
+Technology Stack:
+- ESP32 Firmware
+- Express.js + TypeScript Backend
+- PostgreSQL (Neon)
+- Drizzle ORM
+- React + Vite Frontend
+- Render Deployment
+
+========================================
+CURRENT PROBLEMS
+========================================
+
+Problem 1:
+The ESP32 is connected successfully.
+
+The serial monitor continuously prints:
+
+[API] Reading posted OK (0.0W, 0.0V, 165.00A)
+
+Render logs also show:
+
+POST /api/readings -> HTTP 201
+
+which means the backend is accepting the request successfully.
+
+The dashboard also updates with the values received from the ESP32.
+
+Therefore:
+
+ESP32 → Backend communication works.
+
+Problem 2:
+
+The ESP32 continuously polls:
+
+GET /api/commands/:deviceKey
+
+and keeps receiving the SAME command repeatedly:
+
+relay 6 -> OFF (id=8)
+
+instead of receiving new commands or stopping after acknowledgement.
+
+Problem 3:
+
+The Neon PostgreSQL database still contains dummy/sample values.
+
+The new readings sent by the ESP32 do not appear in the expected history/database.
+
+Problem 4:
+
+Relay commands from the dashboard are not behaving correctly.
+
+Even after changing relay states from the dashboard, the ESP32 keeps receiving the same old command.
+
+========================================
+YOUR TASK
+========================================
+
+I DO NOT want assumptions.
+
+I want you to inspect the ENTIRE project and trace the complete execution flow.
+
+Start from the ESP32 request and continue until the dashboard.
+
+Trace everything.
+
+ESP32
+↓
+
+Backend API
+↓
+
+Database
+↓
+
+Frontend Dashboard
+
+Check every step.
+
+========================================
+CHECK THESE ITEMS
+========================================
+
+1. POST /api/readings
+
+- Verify request body
+- Verify validation
+- Verify database insert
+- Verify Drizzle query
+- Verify transaction
+- Verify returned response
+- Verify inserted row
+
+2. GET /api/commands/:deviceKey
+
+- Verify SQL query
+- Verify filters
+- Verify ordering
+- Verify acknowledged flag
+- Verify why the same command is returned repeatedly
+
+3. POST /api/commandAck
+
+- Verify that acknowledgements actually update the database.
+- Verify that update queries affect rows.
+- Verify that command acknowledgement is working.
+
+4. Database
+
+Verify:
+
+- DATABASE_URL
+- Drizzle configuration
+- schema
+- migrations
+- table names
+- inserts
+- selects
+- updates
+
+Check whether backend is actually connected to the correct Neon database.
+
+5. Frontend
+
+Verify:
+
+- API base URL
+- polling endpoints
+- reading endpoints
+- relay endpoints
+
+Ensure frontend is communicating with the SAME backend used by the ESP32.
+
+6. Search the ENTIRE project for:
+
+- duplicate API URLs
+- duplicate backend URLs
+- duplicate Render deployments
+- hardcoded URLs
+- old endpoints
+- unused backend services
+- multiple DATABASE_URL values
+
+========================================
+VERY IMPORTANT
+========================================
+
+Before changing ANY code:
+
+Find the REAL root cause.
+
+Do NOT guess.
+
+Do NOT rewrite working code.
+
+Do NOT replace working architecture.
+
+Fix ONLY the broken logic.
+
+========================================
+OUTPUT FORMAT
+========================================
+
+For every issue found provide:
+
+1. Root cause
+
+2. File name
+
+3. Function name
+
+4. Line number
+
+5. Why it is happening
+
+6. Exact code changes
+
+After that,
+
+Apply the fixes directly.
+
+========================================
+AFTER FIXING
+========================================
+
+Verify all of the following:
+
+✓ ESP32 posts readings successfully.
+
+✓ Backend stores readings in PostgreSQL.
+
+✓ Dashboard displays live readings correctly.
+
+✓ Relay commands execute correctly.
+
+✓ Commands are acknowledged correctly.
+
+✓ The same command is NOT returned repeatedly.
+
+✓ No existing feature is broken.
+
+✓ No UI or dashboard layout has been changed.
+
+✓ No functionality has been removed.
+
+Continue debugging until all issues are resolved. Do not stop after fixing the first issue.

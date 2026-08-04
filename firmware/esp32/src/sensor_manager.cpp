@@ -43,6 +43,8 @@ SensorData SensorManager::sampleNow() {
   if (d.currentA < 0.01f) d.currentA = 0.0f; // dead-band noise floor
 
   // ── Power ─────────────────────────────────────────────────────────────────
+  // If no valid mains voltage is present, current noise is meaningless.
+  if (d.voltageV == 0.0f) d.currentA = 0.0f;
   // Apparent power; multiply by PF (~0.95) for resistive/light loads
   d.powerW = d.voltageV * d.currentA * 0.95f;
 
