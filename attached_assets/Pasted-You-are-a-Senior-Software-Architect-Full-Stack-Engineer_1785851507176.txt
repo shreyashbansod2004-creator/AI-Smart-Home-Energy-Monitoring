@@ -1,0 +1,530 @@
+You are a Senior Software Architect, Full Stack Engineer, IoT Engineer, Backend Engineer, Frontend Engineer, Database Engineer, QA Engineer, DevOps Engineer, and Code Reviewer.
+
+Treat this as a FINAL PRODUCTION READINESS AUDIT.
+
+This is NOT a code review.
+
+This is NOT a refactoring task.
+
+Your job is to determine whether my AI Smart Home Energy Monitoring System is completely production ready.
+
+DO NOT assume previous AI reports are correct.
+
+Verify everything by reading the actual code and testing the application.
+
+If you find any verified bug, fix ONLY that bug.
+
+Do NOT redesign the project.
+
+Do NOT refactor unrelated code.
+
+Do NOT change the architecture.
+
+Do NOT change the UI.
+
+Do NOT rename files.
+
+Do NOT change API contracts.
+
+Do NOT add new features.
+
+Do NOT modify firmware unless absolutely required.
+
+Only make the minimum changes required to fix verified issues.
+
+=========================================================
+PROJECT
+=========================================================
+
+AI Smart Home Energy Monitoring System
+
+Stack
+
+- ESP32 Firmware
+- Express.js + TypeScript Backend
+- PostgreSQL (Neon)
+- Drizzle ORM
+- React + Vite Frontend
+- Render Deployment
+
+=========================================================
+STEP 1 — COMPLETE CODE AUDIT
+=========================================================
+
+Read the ENTIRE codebase.
+
+Do not trust previous reports.
+
+Verify everything yourself.
+
+Trace the complete data flow.
+
+ESP32
+    ↓
+POST /api/readings
+    ↓
+Backend
+    ↓
+Database
+    ↓
+Dashboard
+
+Verify every stage using actual code.
+
+=========================================================
+STEP 2 — VERIFY DATABASE
+=========================================================
+
+Verify:
+
+✓ readings table stores ESP32 readings
+
+✓ daily_usage updates automatically
+
+✓ dashboard summary uses daily_usage correctly
+
+✓ dashboard history uses real readings
+
+✓ dashboard analytics use real readings
+
+✓ predictions still work
+
+✓ alerts still work
+
+✓ settings still work
+
+Verify there is NO fake telemetry anywhere.
+
+Search for:
+
+Math.random
+
+fakeReading
+
+mockReading
+
+sampleReading
+
+demoReading
+
+synthetic telemetry
+
+placeholder telemetry
+
+simulated telemetry
+
+Random sensor generation
+
+Dashboard demo data
+
+If any fake telemetry exists:
+
+Remove ONLY that code.
+
+Do not remove legitimate seed data such as appliances, settings, alert templates or configuration.
+
+=========================================================
+STEP 3 — VERIFY LIVE DASHBOARD
+=========================================================
+
+Verify that the dashboard displays ONLY real ESP32 readings.
+
+Check:
+
+Summary Cards
+
+Live Metrics
+
+History
+
+Analytics
+
+Energy Charts
+
+Predictions
+
+Alerts
+
+Settings
+
+If ESP32 is disconnected:
+
+Dashboard must NOT invent values.
+
+Dashboard should either:
+
+• show last real readings
+
+OR
+
+• indicate the device is offline.
+
+=========================================================
+STEP 4 — VERIFY APPLIANCE CONTROL
+=========================================================
+
+Verify the complete appliance workflow.
+
+Original appliances must remain:
+
+Bedroom Light
+
+Kitchen Light
+
+Living Room / Sitting Area Light
+
+Study Room Light
+
+Mini Fan
+
+Remaining appliance slots should stay reserved for future use.
+
+Remove temporary testing appliances if any exist.
+
+Verify the complete command flow:
+
+Dashboard
+
+↓
+
+Backend
+
+↓
+
+Commands table
+
+↓
+
+ESP32 polling
+
+↓
+
+Relay execution
+
+↓
+
+Acknowledgement
+
+↓
+
+Dashboard state update
+
+Verify:
+
+✓ relay mapping
+
+✓ relay numbers
+
+✓ command insertion
+
+✓ command acknowledgement
+
+✓ pending commands cleared
+
+✓ no repeated commands
+
+✓ unsupported relays handled safely
+
+=========================================================
+STEP 5 — VERIFY API
+=========================================================
+
+Test every API.
+
+Verify:
+
+✓ Response formats unchanged
+
+✓ Existing endpoints still work
+
+✓ No API contracts changed
+
+=========================================================
+STEP 6 — VERIFY FRONTEND
+=========================================================
+
+Verify:
+
+✓ UI unchanged
+
+✓ Layout unchanged
+
+✓ Components unchanged
+
+✓ Styling unchanged
+
+✓ Pages unchanged
+
+=========================================================
+STEP 7 — VERIFY BUILD
+=========================================================
+
+Run:
+
+Backend build
+
+Frontend build
+
+Type checking
+
+Fix ONLY verified build issues.
+
+=========================================================
+STEP 8 — LIVE DEVICE VERIFICATION
+=========================================================
+
+If an ESP32 is currently connected:
+
+Verify the COMPLETE runtime flow.
+
+1. ESP32 sends POST /api/readings
+
+2. readings table receives new row
+
+3. daily_usage updates
+
+4. Dashboard refreshes automatically
+
+5. Voltage matches ESP32
+
+6. Current matches ESP32
+
+7. Power matches ESP32
+
+8. Energy matches ESP32
+
+9. History updates
+
+10. Analytics updates
+
+11. Predictions continue working
+
+12. Alerts continue working
+
+Now verify appliance control.
+
+For EACH appliance:
+
+Bedroom Light
+
+Kitchen Light
+
+Living Room Light
+
+Study Room Light
+
+Mini Fan
+
+Perform:
+
+Dashboard toggle
+
+↓
+
+Backend command
+
+↓
+
+Command stored
+
+↓
+
+ESP32 polls command
+
+↓
+
+Relay changes
+
+↓
+
+ESP32 acknowledgement
+
+↓
+
+Command removed
+
+↓
+
+Dashboard updates
+
+Confirm that every appliance works correctly.
+
+If an ESP32 is NOT connected:
+
+DO NOT claim runtime verification passed.
+
+Clearly distinguish:
+
+• Code inspection
+
+• Automated tests
+
+• Real runtime tests that could not be completed.
+
+=========================================================
+STEP 9 — END TO END TESTING
+=========================================================
+
+Verify:
+
+✓ ESP32 communication
+
+✓ Backend
+
+✓ Database
+
+✓ Dashboard
+
+✓ Appliance Control
+
+✓ Relay acknowledgement
+
+✓ Daily usage
+
+✓ History
+
+✓ Analytics
+
+✓ Predictions
+
+✓ Alerts
+
+✓ Settings
+
+✓ Offline handling
+
+✓ No fake telemetry
+
+✓ No repeated commands
+
+✓ No pending commands
+
+✓ Existing functionality preserved
+
+=========================================================
+STEP 10 — PRODUCTION READINESS
+=========================================================
+
+Determine whether the project is production ready.
+
+If ANY issue exists:
+
+STOP.
+
+Explain:
+
+• Root cause
+
+• Files
+
+• Functions
+
+• Required fix
+
+Do NOT push.
+
+=========================================================
+STEP 11 — REPORT
+=========================================================
+
+Provide:
+
+1. Root causes found
+
+2. Every modified file
+
+3. Every modified function
+
+4. Git diff
+
+5. SQL / Drizzle changes
+
+6. Firmware changes
+
+7. Whether ESP32 must be reflashed
+
+8. Frontend changes
+
+9. API compatibility
+
+10. Build results
+
+11. Type check results
+
+12. Screenshot of dashboard
+
+13. Runtime verification results
+
+14. Whether dashboard displays ONLY real ESP32 data
+
+15. Whether appliance switching works end-to-end
+
+16. Whether no fake telemetry remains
+
+17. Confirmation that no unrelated files were modified
+
+18. git status
+
+19. git diff --stat
+
+20. git log -1
+
+=========================================================
+FINAL DECISION
+=========================================================
+
+If and ONLY if:
+
+✓ Every build passes
+
+✓ Type checking passes
+
+✓ APIs remain compatible
+
+✓ Dashboard uses ONLY real ESP32 data
+
+✓ No fake telemetry remains
+
+✓ Dashboard Summary works
+
+✓ Dashboard History works
+
+✓ Dashboard Analytics work
+
+✓ Predictions work
+
+✓ Alerts work
+
+✓ Appliance control works
+
+✓ Relay acknowledgements work
+
+✓ No repeated relay commands
+
+✓ UI unchanged
+
+✓ No unrelated modifications
+
+✓ Project is production ready
+
+THEN:
+
+1. Commit with a meaningful commit message.
+
+2. Show me:
+
+- Commit hash
+- Branch
+- git status
+- git diff
+- git log -1
+
+3. Ask for my final approval.
+
+DO NOT push to GitHub until I explicitly reply:
+
+APPROVE PUSH
+
+Only after I approve, execute git push and show the push confirmation.
+
+If ANY verification fails, STOP immediately, explain the issue with code evidence, and do not push.
