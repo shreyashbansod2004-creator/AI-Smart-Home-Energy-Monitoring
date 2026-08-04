@@ -1,0 +1,389 @@
+You are a Senior Full Stack Engineer, IoT Engineer, Backend Engineer, Database Engineer, QA Engineer, and Software Architect.
+
+The major backend fixes have already been implemented.
+
+DO NOT redesign the project.
+
+DO NOT refactor unrelated code.
+
+DO NOT optimize working code.
+
+DO NOT introduce new features.
+
+DO NOT change the UI.
+
+DO NOT change the project architecture.
+
+DO NOT rename files.
+
+DO NOT change API contracts.
+
+Your ONLY task is to verify the entire application, restore my original appliance configuration if it was modified during testing, remove temporary testing data, perform complete end-to-end verification, and only then push the verified changes to GitHub.
+
+=========================================================
+PROJECT
+=========================================================
+
+AI Smart Home Energy Monitoring System
+
+Technology Stack
+
+- ESP32 Firmware
+- Express.js + TypeScript Backend
+- PostgreSQL (Neon)
+- Drizzle ORM
+- React + Vite Frontend
+- Render Deployment
+
+=========================================================
+CURRENT SITUATION
+=========================================================
+
+The following backend fixes have already been implemented:
+
+✓ ESP32 successfully posts readings.
+
+✓ Backend stores readings.
+
+✓ daily_usage aggregation exists.
+
+✓ Dashboard Summary updates.
+
+✓ Dashboard History updates.
+
+✓ Dashboard Analytics update.
+
+✓ Fake reading insertion has been removed.
+
+✓ Relay acknowledgement has been fixed.
+
+✓ Commands no longer repeat.
+
+Now I need a complete verification before deployment.
+
+=========================================================
+RESTORE ORIGINAL APPLIANCE CONFIGURATION
+=========================================================
+
+During testing, temporary appliances were created.
+
+Currently I see cards such as:
+
+- Reserved Relay 6
+- Test Light
+- Ack Test Light
+
+These are NOT part of my project.
+
+Restore ONLY the appliance records.
+
+The dashboard should display exactly these appliances:
+
+1. Bedroom Light
+2. Kitchen Light
+3. Living Room Light (or Sitting Area Light if originally used)
+4. Study Room Light
+5. Mini Fan
+6. Available Slot
+7. Available Slot
+8. Available Slot
+
+Keep the same relay mappings that my project originally used.
+
+Remove only temporary testing appliances.
+
+Do NOT modify the UI.
+
+Do NOT modify React components.
+
+Do NOT redesign cards.
+
+=========================================================
+VERIFY DATABASE
+=========================================================
+
+Inspect every table used by the application.
+
+Verify:
+
+✓ appliances
+
+✓ commands
+
+✓ readings
+
+✓ daily_usage
+
+✓ devices
+
+✓ predictions
+
+✓ alerts
+
+✓ settings
+
+Confirm:
+
+• No temporary testing records remain.
+
+• No fake sensor readings remain.
+
+• No incorrect relay mappings exist.
+
+• No pending commands remain unless intentionally queued.
+
+=========================================================
+VERIFY COMPLETE DATA FLOW
+=========================================================
+
+Trace the complete flow.
+
+ESP32
+
+↓
+
+POST /api/readings
+
+↓
+
+Backend
+
+↓
+
+readings table
+
+↓
+
+daily_usage aggregation
+
+↓
+
+Dashboard Summary
+
+↓
+
+Dashboard Analytics
+
+↓
+
+Dashboard History
+
+Verify that:
+
+✓ readings are inserted correctly.
+
+✓ daily_usage updates correctly.
+
+✓ summary cards show live values.
+
+✓ analytics use real data.
+
+✓ history uses real data.
+
+✓ predictions still work.
+
+✓ alerts still work.
+
+=========================================================
+VERIFY COMMAND FLOW
+=========================================================
+
+Trace:
+
+Dashboard
+
+↓
+
+Backend
+
+↓
+
+commands table
+
+↓
+
+ESP32 polling
+
+↓
+
+Relay switching
+
+↓
+
+Acknowledgement
+
+↓
+
+Command removed
+
+↓
+
+Dashboard updated
+
+Verify:
+
+✓ Commands execute correctly.
+
+✓ Duplicate commands no longer occur.
+
+✓ Unsupported relay numbers are handled safely.
+
+✓ Existing relay mappings are correct.
+
+=========================================================
+VERIFY ESP32 COMPATIBILITY
+=========================================================
+
+Verify whether the backend changes require any firmware changes.
+
+If firmware was NOT modified, explicitly state:
+
+"No firmware update or reflashing is required."
+
+If firmware changed:
+
+List every modified firmware file.
+
+State exactly whether I need to reflash the ESP32.
+
+=========================================================
+VERIFY FRONTEND
+=========================================================
+
+Confirm:
+
+✓ Dashboard layout unchanged.
+
+✓ Components unchanged.
+
+✓ Styling unchanged.
+
+✓ Existing pages unchanged.
+
+✓ Navigation unchanged.
+
+=========================================================
+VERIFY APIs
+=========================================================
+
+Test every API endpoint used by the dashboard.
+
+Confirm:
+
+✓ Existing endpoints still work.
+
+✓ Response formats remain compatible.
+
+✓ No API contract changed.
+
+=========================================================
+BUILD VERIFICATION
+=========================================================
+
+Run:
+
+- Backend build
+- Frontend build
+- Type checking
+
+Fix ONLY build errors related to the verified issues.
+
+=========================================================
+END-TO-END TESTING
+=========================================================
+
+Verify that:
+
+✓ ESP32 can connect successfully.
+
+✓ ESP32 posts readings.
+
+✓ Dashboard receives live readings.
+
+✓ Dashboard Summary updates.
+
+✓ Dashboard History updates.
+
+✓ Dashboard Analytics update.
+
+✓ Predictions still work.
+
+✓ Alerts still work.
+
+✓ Appliance switching works.
+
+✓ Relay acknowledgement works.
+
+✓ No repeated commands occur.
+
+=========================================================
+REPORT
+=========================================================
+
+Before pushing, provide a complete report including:
+
+1. Root cause verification for every issue.
+
+2. Every modified file.
+
+3. Every modified function.
+
+4. Complete git diff.
+
+5. Exact SQL / Drizzle changes.
+
+6. Output of git status.
+
+7. Screenshot of the dashboard showing live data.
+
+8. Confirmation that the original appliance cards have been restored.
+
+9. Confirmation that no unrelated files were modified.
+
+10. Confirmation that the frontend UI is unchanged.
+
+11. Confirmation that existing APIs remain compatible.
+
+12. Confirmation whether firmware changed.
+
+13. Confirmation whether ESP32 must be reflashed.
+
+14. Confirmation that the project builds successfully.
+
+15. Confirmation that Render deployment will work correctly.
+
+=========================================================
+GITHUB
+=========================================================
+
+DO NOT push immediately.
+
+Push ONLY if ALL of the following are true:
+
+✓ Original appliance cards restored.
+
+✓ Temporary test data removed.
+
+✓ Dashboard displays real live data.
+
+✓ End-to-end verification passes.
+
+✓ Builds pass.
+
+✓ APIs pass.
+
+✓ No unrelated files changed.
+
+After pushing:
+
+Provide:
+
+• Commit hash
+
+• Branch name
+
+• GitHub push confirmation
+
+• Short deployment summary
+
+If ANY verification fails, stop immediately and explain the failure instead of pushing.
