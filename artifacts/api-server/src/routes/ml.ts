@@ -88,11 +88,11 @@ router.get("/prediction/ml", async (req, res): Promise<void> => {
     const budget = settings?.monthlyBudgetInr ?? 1500;
 
     // ── Gather feature values from DB ─────────────────────────────────────────
-    let avgDailyKwh = 8.4;
+    let avgDailyKwh = 0;
     let currentMonthKwh = 0;
     let prevMonthKwh = 0;
     let latestPowerW = 0;
-    let latestVoltage = 230;
+    let latestVoltage = 0;
     let latestCurrent = 0;
 
     if (device) {
@@ -113,10 +113,10 @@ router.get("/prediction/ml", async (req, res): Promise<void> => {
 
       const thirtyDaysAgo = new Date(now.getTime() - 29 * 86400000).toISOString().slice(0, 10);
       const [avgRow] = await db
-        .select({ avg: sql<number>`COALESCE(AVG(energy_kwh), 8.4)` })
+        .select({ avg: sql<number>`COALESCE(AVG(energy_kwh), 0)` })
         .from(dailyUsageTable)
         .where(and(eq(dailyUsageTable.deviceId, device.id), gte(dailyUsageTable.usageDate, thirtyDaysAgo)));
-      avgDailyKwh = parseFloat(Number(avgRow?.avg ?? 8.4).toFixed(2));
+      avgDailyKwh = parseFloat(Number(avgRow?.avg ?? 0).toFixed(2));
 
       const [latest] = await db
         .select()
@@ -127,7 +127,7 @@ router.get("/prediction/ml", async (req, res): Promise<void> => {
 
       if (latest) {
         latestPowerW   = latest.powerWatts;
-        latestVoltage  = latest.voltageV   ?? 230;
+        latestVoltage  = latest.voltageV   ?? 0;
         latestCurrent  = latest.currentA   ?? 0;
       }
     }

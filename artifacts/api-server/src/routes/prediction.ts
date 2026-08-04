@@ -113,7 +113,7 @@ router.get("/prediction/current", async (req, res): Promise<void> => {
 
     let currentMonthKwh = 0;
     let prevMonthKwh = 0;
-    let avgDailyKwh = 8.4;
+    let avgDailyKwh = 0;
 
     if (device) {
       // Current month usage
@@ -145,13 +145,12 @@ router.get("/prediction/current", async (req, res): Promise<void> => {
         .select({ avg: sql<number>`COALESCE(AVG(energy_kwh), 0)` })
         .from(dailyUsageTable)
         .where(and(eq(dailyUsageTable.deviceId, device.id), gte(dailyUsageTable.usageDate, thirtyDaysAgo)));
-      avgDailyKwh = parseFloat(Number(avgRow?.avg ?? 8.4).toFixed(2));
+      avgDailyKwh = parseFloat(Number(avgRow?.avg ?? 0).toFixed(2));
     }
 
-    // Use seeded fallbacks if no real data yet
-    if (currentMonthKwh === 0) currentMonthKwh = 126.7;
-    if (prevMonthKwh === 0) prevMonthKwh = 114;
-    if (avgDailyKwh === 0) avgDailyKwh = 8.4;
+    // No fallback — prediction uses real data only.
+    // If the ESP32 has not sent readings yet, values remain 0 and the
+    // prediction will reflect zero usage (not invented figures).
 
     const result = computePrediction(prevMonthKwh, currentMonthKwh, avgDailyKwh, 5, budget, tariff);
 

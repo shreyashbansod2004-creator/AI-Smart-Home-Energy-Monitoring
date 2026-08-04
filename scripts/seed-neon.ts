@@ -14,14 +14,16 @@ async function run() {
   try {
     // ── 1. Ensure existing app tables have data ──────────────────────────────
     await client.query(`
-      INSERT INTO appliances (id, name, location, is_on, power_w, icon_type, updated_at)
+      INSERT INTO appliances (id, name, location, is_on, power_w, icon_type, relay_pin, relay_number, updated_at)
       VALUES
-        ('light-living',  'Living Room Light', 'Living Room',  false, 10, 'light', NOW()),
-        ('light-bedroom', 'Bedroom Light',      'Bedroom',      false, 10, 'light', NOW()),
-        ('light-kitchen', 'Kitchen Light',      'Kitchen',      false, 10, 'light', NOW()),
-        ('light-sitting', 'Sitting Area Light', 'Sitting Area', false, 10, 'light', NOW()),
-        ('fan-living',    'Mini Fan',           'Living Room',  false, 35, 'fan',   NOW())
-      ON CONFLICT (id) DO NOTHING
+        ('light-living',  'Living Room Light', 'Living Room', false, 10, 'light', 13, 1, NOW()),
+        ('light-bedroom', 'Bedroom Light',     'Bedroom',     false, 10, 'light', 12, 2, NOW()),
+        ('light-kitchen', 'Kitchen Light',     'Kitchen',     false, 10, 'light', 14, 3, NOW()),
+        ('light-study',   'Study Room Light',  'Study Room',  false, 10, 'light', 27, 4, NOW()),
+        ('fan-living',    'Mini Fan',          'Living Room', false, 35, 'fan',   26, 5, NOW())
+      ON CONFLICT (id) DO UPDATE
+        SET name=EXCLUDED.name, location=EXCLUDED.location, relay_pin=EXCLUDED.relay_pin,
+            relay_number=EXCLUDED.relay_number, updated_at=NOW()
     `);
     console.log("✓ Appliances seeded");
 
