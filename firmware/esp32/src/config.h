@@ -21,7 +21,7 @@
 
 // Relay Module (active-LOW relays — HIGH = OFF, LOW = ON)
 #define RELAY_PIN_1      13   // Living Room Light
-#define RELAY_PIN_2      12   // Bedroom Light
+#define RELAY_PIN_2      19   // Bedroom Light
 #define RELAY_PIN_3      14   // Kitchen Light
 #define RELAY_PIN_4      27   // Study Room Light
 #define RELAY_PIN_5      26   // Mini Fan
@@ -31,6 +31,16 @@
 
 // Number of active relays (appliances)
 #define RELAY_COUNT      5
+
+// Appliance names indexed by relay (0-based: APPLIANCE_NAMES[0] = relay 1)
+// Defined as static so each translation unit gets its own copy without linker conflicts.
+static const char* const APPLIANCE_NAMES[RELAY_COUNT] = {
+  "Living Room Light",  // Relay 1 — GPIO13
+  "Bedroom Light",      // Relay 2 — GPIO19
+  "Kitchen Light",      // Relay 3 — GPIO14
+  "Study Room Light",   // Relay 4 — GPIO27
+  "Mini Fan"            // Relay 5 — GPIO26
+};
 
 // Voltage & Current Sensors (ADC)
 #define VOLTAGE_PIN      34   // ZMPT101B voltage sensor output

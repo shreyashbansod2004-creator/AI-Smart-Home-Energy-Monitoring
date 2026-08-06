@@ -17,7 +17,7 @@ async function run() {
       INSERT INTO appliances (id, name, location, is_on, power_w, icon_type, relay_pin, relay_number, updated_at)
       VALUES
         ('light-living',  'Living Room Light', 'Living Room', false, 10, 'light', 13, 1, NOW()),
-        ('light-bedroom', 'Bedroom Light',     'Bedroom',     false, 10, 'light', 12, 2, NOW()),
+        ('light-bedroom', 'Bedroom Light',     'Bedroom',     false, 10, 'light', 19, 2, NOW()),
         ('light-kitchen', 'Kitchen Light',     'Kitchen',     false, 10, 'light', 14, 3, NOW()),
         ('light-study',   'Study Room Light',  'Study Room',  false, 10, 'light', 27, 4, NOW()),
         ('fan-living',    'Mini Fan',          'Living Room', false, 35, 'fan',   26, 5, NOW())

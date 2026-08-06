@@ -17,14 +17,7 @@ RelayManager  relays;
 OledManager   oled;
 ApiClient     api;
 
-// ─── Appliance → relay mapping (relay numbers 1–5 active) ────────────────────
-const char* APPLIANCE_NAMES[RELAY_COUNT] = {
-  "Living Room Light",  // Relay 1 — GPIO13
-  "Bedroom Light",      // Relay 2 — GPIO12
-  "Kitchen Light",      // Relay 3 — GPIO14
-  "Study Room Light",   // Relay 4 — GPIO27
-  "Mini Fan"            // Relay 5 — GPIO26
-};
+// APPLIANCE_NAMES is defined in config.h (indexed by relay, 0-based)
 
 // ─── Setup ───────────────────────────────────────────────────────────────────
 void setup() {

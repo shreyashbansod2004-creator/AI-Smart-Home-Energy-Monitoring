@@ -44,8 +44,12 @@ uint8_t RelayManager::pinForRelay(uint8_t relayNum) const {
 }
 
 void RelayManager::printStates() const {
-  for (uint8_t i = 0; i < 8; i++) {
-    Serial.printf("  Relay%d(GPIO%d):%s\n",
-                  i + 1, PIN_MAP[i], _states[i] ? "ON" : "OFF");
+  Serial.println("==============================");
+  Serial.println("Relay Status");
+  Serial.println("==============================");
+  for (uint8_t i = 0; i < RELAY_COUNT; i++) {
+    Serial.printf("%s (GPIO%d): %s\n",
+                  APPLIANCE_NAMES[i], PIN_MAP[i], _states[i] ? "ON" : "OFF");
   }
+  Serial.println("==============================");
 }
