@@ -24,8 +24,11 @@ void RelayManager::set(uint8_t relayNum, bool on) {
   _states[idx] = on;
   // Active-LOW relay: LOW = ON, HIGH = OFF
   digitalWrite(PIN_MAP[idx], on ? LOW : HIGH);
-  Serial.printf("[Relay] Relay %d (GPIO%d) -> %s\n",
-                relayNum, PIN_MAP[idx], on ? "ON" : "OFF");
+  // Print appliance name immediately on every state change
+  if (idx < RELAY_COUNT) {
+    Serial.printf("%s (GPIO%d): %s\n",
+                  APPLIANCE_NAMES[idx], PIN_MAP[idx], on ? "ON" : "OFF");
+  }
 }
 
 bool RelayManager::getState(uint8_t relayNum) const {
@@ -44,12 +47,8 @@ uint8_t RelayManager::pinForRelay(uint8_t relayNum) const {
 }
 
 void RelayManager::printStates() const {
-  Serial.println("==============================");
-  Serial.println("Relay Status");
-  Serial.println("==============================");
   for (uint8_t i = 0; i < RELAY_COUNT; i++) {
-    Serial.printf("%s (GPIO%d): %s\n",
+    Serial.printf("  %-22s (GPIO%d): %s\n",
                   APPLIANCE_NAMES[i], PIN_MAP[i], _states[i] ? "ON" : "OFF");
   }
-  Serial.println("==============================");
 }

@@ -31,9 +31,9 @@ async function run() {
       INSERT INTO alerts (id, type, title, message, timestamp, severity, is_dismissed, appliance_name)
       VALUES
         ('alert-1','high_power',     'High Power Usage',         'Power usage crossed 750 W. Current: 782 W',                          NOW() - INTERVAL '30 minutes', 'critical',false, NULL),
-        ('alert-2','unusual_usage',  'Unusual Usage Detected',   'More than usual usage in Kitchen. Duration: 45 mins',                 NOW() - INTERVAL '14 hours',   'high',    false, 'Refrigerator'),
+        ('alert-2','unusual_usage',  'Unusual Usage Detected',   'More than usual usage in Kitchen. Duration: 45 mins',                 NOW() - INTERVAL '14 hours',   'high',    false, 'Kitchen Light'),
         ('alert-3','bill_alert',     'Bill Prediction Alert',    'Estimated bill is higher than last month. Est. Bill: ₹1,620',         NOW() - INTERVAL '16 hours',   'medium',  false, NULL),
-        ('alert-4','appliance_alert','AC Running Long',          'Air Conditioner has been running continuously for 6 hours',           NOW() - INTERVAL '2 hours',    'high',    false, 'Air Conditioner'),
+        ('alert-4','appliance_alert','Mini Fan Running Long',     'Mini Fan has been running continuously for 6 hours',                  NOW() - INTERVAL '2 hours',    'high',    false, 'Mini Fan'),
         ('alert-5','info',           'System Update',            'Energy monitoring system updated successfully. All sensors online.',  NOW() - INTERVAL '1 day',      'low',     false, NULL)
       ON CONFLICT (id) DO NOTHING
     `);

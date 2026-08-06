@@ -118,13 +118,22 @@ void loop() {
   // 7. Refresh OLED (non-blocking — respects OLED_REFRESH_INTERVAL)
   oled.update(data, wifi.isConnected(), activeRelays);
 
-  // 8. Periodic debug output to Serial
+  // 8. Periodic status output to Serial (every 5 s)
   static unsigned long lastDebugMs = 0;
   if (millis() - lastDebugMs >= 5000) {
     lastDebugMs = millis();
-    Serial.printf("[Main] V=%.1fV I=%.2fA P=%.1fW E=%.4fkWh WiFi=%s\n",
-                  data.voltageV, data.currentA, data.powerW, data.energyKwh,
-                  wifi.isConnected() ? "OK" : "FAIL");
+    Serial.println("====================================================");
+    Serial.println("ESP32 SMART HOME STATUS");
+    Serial.println("====================================================");
     relays.printStates();
+    Serial.println("----------------------------------------------------");
+    Serial.printf("Voltage : %.1f V\n",    data.voltageV);
+    Serial.printf("Current : %.3f A\n",    data.currentA);
+    Serial.printf("Power   : %.1f W\n",    data.powerW);
+    Serial.printf("Energy  : %.4f kWh\n",  data.energyKwh);
+    Serial.printf("WiFi    : %s\n",        wifi.isConnected() ? "Connected" : "Disconnected");
+    Serial.printf("Backend : %s\n",        wifi.isConnected() ? "Connected" : "Disconnected");
+    Serial.printf("Device  : %s\n",        DEVICE_KEY);
+    Serial.println("====================================================");
   }
 }
