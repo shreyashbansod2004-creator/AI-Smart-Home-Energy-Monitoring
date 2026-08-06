@@ -132,7 +132,6 @@ void loop() {
     Serial.printf("Power   : %.1f W\n",    data.powerW);
     Serial.printf("Energy  : %.4f kWh\n",  data.energyKwh);
     Serial.printf("WiFi    : %s\n",        wifi.isConnected() ? "Connected" : "Disconnected");
-    Serial.printf("Backend : %s\n",        wifi.isConnected() ? "Connected" : "Disconnected");
     Serial.printf("Device  : %s\n",        DEVICE_KEY);
     Serial.println("====================================================");
   }

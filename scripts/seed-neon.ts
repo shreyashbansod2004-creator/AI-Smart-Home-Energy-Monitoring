@@ -35,7 +35,9 @@ async function run() {
         ('alert-3','bill_alert',     'Bill Prediction Alert',    'Estimated bill is higher than last month. Est. Bill: ₹1,620',         NOW() - INTERVAL '16 hours',   'medium',  false, NULL),
         ('alert-4','appliance_alert','Mini Fan Running Long',     'Mini Fan has been running continuously for 6 hours',                  NOW() - INTERVAL '2 hours',    'high',    false, 'Mini Fan'),
         ('alert-5','info',           'System Update',            'Energy monitoring system updated successfully. All sensors online.',  NOW() - INTERVAL '1 day',      'low',     false, NULL)
-      ON CONFLICT (id) DO NOTHING
+      ON CONFLICT (id) DO UPDATE
+        SET type=EXCLUDED.type, title=EXCLUDED.title, message=EXCLUDED.message,
+            severity=EXCLUDED.severity, appliance_name=EXCLUDED.appliance_name
     `);
     console.log("✓ Alerts seeded");
 
