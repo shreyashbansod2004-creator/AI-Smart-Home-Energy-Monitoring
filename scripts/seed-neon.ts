@@ -49,7 +49,7 @@ async function run() {
     // ── 2. Insert device ─────────────────────────────────────────────────────
     const devRes = await client.query(`
       INSERT INTO devices (device_key, name, tariff_rate_per_kwh)
-      VALUES ('home-meter-001', 'Home Meter', 8.5)
+      VALUES ('esp32_001', 'ESP32 Smart Meter', 8.5)
       ON CONFLICT (device_key) DO UPDATE SET name = EXCLUDED.name
       RETURNING id
     `);

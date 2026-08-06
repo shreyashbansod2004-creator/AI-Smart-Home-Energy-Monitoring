@@ -1,0 +1,472 @@
+You are a Senior Software Architect, Embedded Systems Engineer, ESP32 Firmware Engineer, Full Stack Engineer, Backend Engineer, Database Engineer, QA Engineer, and IoT Engineer.
+
+Treat this as a PRODUCTION BUG FIX and END-TO-END VERIFICATION.
+
+DO NOT assume anything.
+Verify every claim by reading the actual code before making changes.
+
+=========================================================
+PRIMARY GOAL
+=========================================================
+
+I have an AI Smart Home Energy Monitoring System.
+
+The dashboard controls appliances through an ESP32.
+
+I want ALL intended appliances to work correctly from the web application.
+
+Current intended appliances are ONLY:
+
+1. Living Room Light
+2. Bedroom Light
+3. Kitchen Light
+4. Study Room Light
+5. Mini Fan
+
+No extra appliances should exist.
+
+The complete control flow must work:
+
+Dashboard
+↓
+
+Backend
+↓
+
+Database
+↓
+
+Commands Table
+↓
+
+ESP32 Poll
+↓
+
+Relay GPIO
+↓
+
+Command Acknowledgement
+↓
+
+Dashboard Update
+
+Everything must be verified.
+
+If any issue exists, fix ONLY the verified issue.
+
+Do NOT redesign the project.
+
+=========================================================
+DO NOT
+=========================================================
+
+DO NOT refactor unrelated code.
+
+DO NOT change architecture.
+
+DO NOT change API contracts.
+
+DO NOT redesign UI.
+
+DO NOT rename files.
+
+DO NOT modify database schema unless absolutely required.
+
+DO NOT change firmware logic unless required.
+
+DO NOT change project structure.
+
+Only fix verified bugs.
+
+=========================================================
+STEP 1 — VERIFY APPLIANCE CONFIGURATION
+=========================================================
+
+Read the complete codebase.
+
+Verify that only these appliances exist:
+
+Living Room Light
+Bedroom Light
+Kitchen Light
+Study Room Light
+Mini Fan
+
+Search every location where appliances are defined.
+
+Verify:
+
+Database seed
+
+Database rows
+
+Frontend
+
+Backend
+
+API
+
+Firmware
+
+If duplicate, temporary, testing, or unused appliances exist,
+remove ONLY the invalid ones.
+
+=========================================================
+STEP 2 — VERIFY RELAY MAPPING
+=========================================================
+
+Verify the relay mapping matches exactly.
+
+Living Room Light  -> Relay 1 -> GPIO13
+
+Bedroom Light      -> Relay 2 -> GPIO19
+
+Kitchen Light      -> Relay 3 -> GPIO14
+
+Study Room Light   -> Relay 4 -> GPIO27
+
+Mini Fan           -> Relay 5 -> GPIO26
+
+Verify:
+
+relay_number
+
+GPIO mapping
+
+Firmware mapping
+
+Database mapping
+
+API mapping
+
+Dashboard mapping
+
+Everything must match exactly.
+
+=========================================================
+STEP 3 — VERIFY END TO END FLOW
+=========================================================
+
+Trace every appliance.
+
+Living Room Light
+
+↓
+
+PATCH /toggle
+
+↓
+
+commands table
+
+↓
+
+GET /commands
+
+↓
+
+ESP32
+
+↓
+
+GPIO
+
+↓
+
+POST /commandAck
+
+↓
+
+Dashboard refresh
+
+Repeat for every appliance.
+
+Verify every stage.
+
+=========================================================
+STEP 4 — FIX VERIFIED BUGS
+=========================================================
+
+If any appliance:
+
+does not toggle,
+
+uses wrong relay,
+
+uses wrong GPIO,
+
+never receives command,
+
+never acknowledges,
+
+remains pending,
+
+or maps incorrectly,
+
+fix ONLY that issue.
+
+=========================================================
+STEP 5 — REMOVE INVALID RELAYS
+=========================================================
+
+My project is designed for ONLY FIVE appliances.
+
+If relay 6, relay 7 or relay 8 commands are still generated anywhere,
+
+find the exact source.
+
+Remove the verified cause.
+
+After the fix,
+
+the ESP32 must NEVER receive:
+
+relay 6
+
+relay 7
+
+relay 8
+
+unless I explicitly configure additional appliances.
+
+=========================================================
+STEP 6 — IMPROVE SERIAL MONITOR OUTPUT
+=========================================================
+
+Modify ONLY the Serial Monitor debug output.
+
+Do NOT change firmware logic.
+
+Do NOT change relay logic.
+
+Do NOT change API logic.
+
+Instead of printing:
+
+Relay1(GPIO13):ON
+
+Relay2(GPIO19):OFF
+
+print:
+
+Living Room Light (GPIO13): ON
+
+Bedroom Light (GPIO19): OFF
+
+Kitchen Light (GPIO14): OFF
+
+Study Room Light (GPIO27): OFF
+
+Mini Fan (GPIO26): ON
+
+Print every appliance by its real name.
+
+Maintain clean formatting.
+
+Example:
+
+==============================
+Relay Status
+==============================
+
+Living Room Light (GPIO13): ON
+
+Bedroom Light (GPIO19): OFF
+
+Kitchen Light (GPIO14): OFF
+
+Study Room Light (GPIO27): OFF
+
+Mini Fan (GPIO26): ON
+
+==============================
+
+The Serial Monitor should clearly show which appliance is ON or OFF.
+
+=========================================================
+STEP 7 — VERIFY COMMAND ACKNOWLEDGEMENT
+=========================================================
+
+Verify that after executing a relay command:
+
+ESP32 sends:
+
+POST /api/commandAck
+
+Backend marks:
+
+acknowledged = true
+
+executed_at updated
+
+Command disappears from pending queue.
+
+Verify there are no repeated commands.
+
+=========================================================
+STEP 8 — LIVE DEVICE TEST
+=========================================================
+
+If the ESP32 is connected:
+
+Test ALL FIVE appliances individually.
+
+For each appliance verify:
+
+Dashboard Toggle
+
+↓
+
+Backend receives request
+
+↓
+
+Command inserted
+
+↓
+
+ESP32 polls
+
+↓
+
+Correct relay activated
+
+↓
+
+Correct GPIO changes
+
+↓
+
+Serial Monitor prints appliance name
+
+↓
+
+Acknowledgement succeeds
+
+↓
+
+Dashboard updates
+
+Repeat for:
+
+Living Room Light
+
+Bedroom Light
+
+Kitchen Light
+
+Study Room Light
+
+Mini Fan
+
+=========================================================
+STEP 9 — FINAL VERIFICATION
+=========================================================
+
+Confirm:
+
+✓ All five appliances work.
+
+✓ Correct relay numbers.
+
+✓ Correct GPIO pins.
+
+✓ No relay 6.
+
+✓ No relay 7.
+
+✓ No relay 8.
+
+✓ Command queue clean.
+
+✓ No stale commands.
+
+✓ Dashboard state correct.
+
+✓ ESP32 state correct.
+
+✓ Command acknowledgement works.
+
+✓ APIs unchanged.
+
+✓ UI unchanged.
+
+✓ Build passes.
+
+=========================================================
+STEP 10 — BUILD
+=========================================================
+
+Run:
+
+Backend build
+
+Frontend build
+
+Typecheck
+
+Fix ONLY verified issues.
+
+=========================================================
+STEP 11 — REPORT
+=========================================================
+
+Provide a complete report including:
+
+1. Root cause(s)
+
+2. Every modified file
+
+3. Every modified function
+
+4. Relay mapping verification
+
+5. GPIO mapping verification
+
+6. Dashboard verification
+
+7. Backend verification
+
+8. Firmware verification
+
+9. Serial Monitor output changes
+
+10. Build results
+
+11. End-to-end testing results
+
+12. Confirmation that all five appliances work correctly
+
+13. Confirmation that relay 6, 7 and 8 are never generated
+
+14. Confirmation that Serial Monitor now prints appliance names
+
+=========================================================
+FINAL DECISION
+=========================================================
+
+If ALL tests pass:
+
+Commit the verified changes.
+
+Push to the connected GitHub repository.
+
+Show:
+
+Commit hash
+
+Branch
+
+git status
+
+git log -1
+
+Push confirmation
+
+If ANY verification fails,
+
+STOP.
+
+Do NOT push.
+
+Explain the exact issue with code evidence and what still needs to be fixed.
