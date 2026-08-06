@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { eq, and } from "drizzle-orm";
+import { eq, and, lt } from "drizzle-orm";
 import { db, commandsTable } from "@workspace/db";
 
 const router = Router();
@@ -13,6 +13,20 @@ const router = Router();
 router.get("/commands/:deviceKey", async (req, res): Promise<void> => {
   const { deviceKey } = req.params;
   try {
+    // Prune commands older than 30 s that were never acknowledged.
+    // These are stale (ESP32 was offline or missed the window); fresh toggles
+    // take priority once the expired entries are cleared.
+    const ttlCutoff = new Date(Date.now() - 30_000);
+    await db
+      .delete(commandsTable)
+      .where(
+        and(
+          eq(commandsTable.deviceKey, deviceKey),
+          eq(commandsTable.acknowledged, false),
+          lt(commandsTable.createdAt, ttlCutoff),
+        ),
+      );
+
     const [cmd] = await db
       .select()
       .from(commandsTable)

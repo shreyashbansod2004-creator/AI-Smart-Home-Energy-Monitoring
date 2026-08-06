@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db, appliancesTable, commandsTable } from "@workspace/db";
 import {
   GetAppliancesResponse,
@@ -66,6 +66,16 @@ router.patch("/appliances/:id/toggle", async (req, res): Promise<void> => {
   // Dispatch a relay command to the ESP32 if this appliance has a relay assigned
   if (updated.relayNumber !== null && updated.relayNumber !== undefined) {
     try {
+      // "Latest-wins" queue: cancel any pending commands for this appliance
+      // before inserting the new one. Prevents stale backlog from blocking
+      // newer intents when the ESP32 is offline or slow to acknowledge.
+      await db.delete(commandsTable).where(
+        and(
+          eq(commandsTable.deviceKey, ESP32_DEVICE_KEY),
+          eq(commandsTable.applianceId, updated.id),
+          eq(commandsTable.acknowledged, false),
+        ),
+      );
       await db.insert(commandsTable).values({
         deviceKey:   ESP32_DEVICE_KEY,
         applianceId: updated.id,
@@ -106,6 +116,13 @@ router.post("/appliances/turn-all-off", async (req, res): Promise<void> => {
 
   if (commandValues.length > 0) {
     try {
+      // Cancel all pending commands before issuing a bulk OFF sweep
+      await db.delete(commandsTable).where(
+        and(
+          eq(commandsTable.deviceKey, ESP32_DEVICE_KEY),
+          eq(commandsTable.acknowledged, false),
+        ),
+      );
       await db.insert(commandsTable).values(commandValues);
     } catch (err) {
       console.error("Bulk command dispatch error:", err);
