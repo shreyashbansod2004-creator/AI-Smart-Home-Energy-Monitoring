@@ -1,9 +1,11 @@
 import { Router } from "express";
 import { z } from "zod";
-import { eq, and, lt } from "drizzle-orm";
+import { eq, and, lt, gt, or, gte, lte } from "drizzle-orm";
 import { db, commandsTable } from "@workspace/db";
 
 const router = Router();
+const MIN_RELAY_NUMBER = 1;
+const MAX_RELAY_NUMBER = 5;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/commands/:deviceKey
@@ -27,6 +29,20 @@ router.get("/commands/:deviceKey", async (req, res): Promise<void> => {
         ),
       );
 
+    // Invalid relay assignments are never executable by the ESP32.
+    await db
+      .delete(commandsTable)
+      .where(
+        and(
+          eq(commandsTable.deviceKey, deviceKey),
+          eq(commandsTable.acknowledged, false),
+          or(
+            lt(commandsTable.relayNumber, MIN_RELAY_NUMBER),
+            gt(commandsTable.relayNumber, MAX_RELAY_NUMBER),
+          ),
+        ),
+      );
+
     const [cmd] = await db
       .select()
       .from(commandsTable)
@@ -34,6 +50,8 @@ router.get("/commands/:deviceKey", async (req, res): Promise<void> => {
         and(
           eq(commandsTable.deviceKey, deviceKey),
           eq(commandsTable.acknowledged, false),
+          gte(commandsTable.relayNumber, MIN_RELAY_NUMBER),
+          lte(commandsTable.relayNumber, MAX_RELAY_NUMBER),
         ),
       )
       .orderBy(commandsTable.createdAt)

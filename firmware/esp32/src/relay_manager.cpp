@@ -1,14 +1,14 @@
 #include "relay_manager.h"
 #include "config.h"
 
-// GPIO pin assignments for relay 1–8 (matches config.h)
-const uint8_t RelayManager::PIN_MAP[8] = {
+// GPIO pin assignments for relay 1–5 (matches config.h)
+const uint8_t RelayManager::PIN_MAP[RELAY_COUNT] = {
   RELAY_PIN_1, RELAY_PIN_2, RELAY_PIN_3, RELAY_PIN_4,
-  RELAY_PIN_5, RELAY_PIN_6, RELAY_PIN_7, RELAY_PIN_8
+  RELAY_PIN_5
 };
 
 void RelayManager::begin() {
-  for (uint8_t i = 0; i < 8; i++) {
+  for (uint8_t i = 0; i < RELAY_COUNT; i++) {
     pinMode(PIN_MAP[i], OUTPUT);
     digitalWrite(PIN_MAP[i], HIGH); // Active-LOW: HIGH = relay OFF
   }
@@ -16,7 +16,7 @@ void RelayManager::begin() {
 }
 
 void RelayManager::set(uint8_t relayNum, bool on) {
-  if (relayNum < 1 || relayNum > 8) {
+  if (relayNum < 1 || relayNum > RELAY_COUNT) {
     Serial.printf("[Relay] Invalid relay number: %d\n", relayNum);
     return;
   }
@@ -32,17 +32,17 @@ void RelayManager::set(uint8_t relayNum, bool on) {
 }
 
 bool RelayManager::getState(uint8_t relayNum) const {
-  if (relayNum < 1 || relayNum > 8) return false;
+  if (relayNum < 1 || relayNum > RELAY_COUNT) return false;
   return _states[relayNum - 1];
 }
 
 void RelayManager::allOff() {
-  for (uint8_t i = 1; i <= 8; i++) set(i, false);
+  for (uint8_t i = 1; i <= RELAY_COUNT; i++) set(i, false);
   Serial.println("[Relay] All relays turned OFF.");
 }
 
 uint8_t RelayManager::pinForRelay(uint8_t relayNum) const {
-  if (relayNum < 1 || relayNum > 8) return 0;
+  if (relayNum < 1 || relayNum > RELAY_COUNT) return 0;
   return PIN_MAP[relayNum - 1];
 }
 

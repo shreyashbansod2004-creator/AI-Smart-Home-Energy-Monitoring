@@ -1,9 +1,10 @@
 #pragma once
 
 #include <Arduino.h>
+#include "config.h"
 
 /**
- * RelayManager — controls up to 8 relay channels.
+ * RelayManager — controls the five active relay channels.
  * Relays are active-LOW: writing LOW turns the relay ON.
  * All relay states are tracked in memory for reporting.
  */
@@ -17,7 +18,7 @@ public:
 
   /**
    * Set a relay by relay number (1-indexed, matching relay mapping).
-   * @param relayNum  Relay number 1–8
+   * @param relayNum  Relay number 1–5
    * @param on        true = relay ON (circuit closed), false = OFF
    */
   void set(uint8_t relayNum, bool on);
@@ -35,8 +36,8 @@ public:
   void printStates() const;
 
 private:
-  static const uint8_t PIN_MAP[8];  // GPIO pins for relays 1–8
-  bool _states[8] = { false };       // Current relay states
+  static const uint8_t PIN_MAP[RELAY_COUNT];  // GPIO pins for relays 1–5
+  bool _states[RELAY_COUNT] = { false };       // Current relay states
 
   uint8_t pinForRelay(uint8_t relayNum) const;
 };

@@ -6,6 +6,7 @@
 
 void ApiClient::begin(const String& baseUrl, const String& deviceKey) {
   _baseUrl   = baseUrl;
+  while (_baseUrl.endsWith("/")) _baseUrl.remove(_baseUrl.length() - 1);
   _deviceKey = deviceKey;
   Serial.printf("[API] Base URL: %s  DeviceKey: %s\n",
                 _baseUrl.c_str(), _deviceKey.c_str());
@@ -69,6 +70,11 @@ RelayCommand ApiClient::pollCommand() {
   http.addHeader("Accept", "application/json");
 
   int statusCode = http.GET();
+  if (statusCode == 204) {
+    Serial.println("[API] No pending command (HTTP 204).");
+    http.end();
+    return cmd;
+  }
   if (statusCode != 200) {
     http.end();
     return cmd; // No pending command or error

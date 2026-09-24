@@ -43,7 +43,7 @@ export const appliancesTable = pgTable("appliances", {
   powerW: real("power_w").notNull(),
   iconType: text("icon_type").notNull().default("plug"),
   relayPin: integer("relay_pin"),          // GPIO pin for this appliance's relay
-  relayNumber: integer("relay_number"),    // Relay number 1–8
+  relayNumber: integer("relay_number"),    // Relay number 1–5
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 

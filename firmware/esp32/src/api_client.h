@@ -8,7 +8,7 @@
  */
 struct RelayCommand {
   int    id         = -1;    // Command ID for acknowledgement
-  int    relayNum   = -1;    // Relay number 1–8
+  int    relayNum   = -1;    // Relay number 1–5
   bool   turnOn     = false; // true = turn ON, false = turn OFF
   String applianceId;        // For acknowledgement payload
   bool   valid      = false; // true if this struct contains a real command

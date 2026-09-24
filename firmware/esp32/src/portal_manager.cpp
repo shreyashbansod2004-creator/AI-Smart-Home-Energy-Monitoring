@@ -80,7 +80,7 @@ static const char PORTAL_HTML[] PROGMEM = R"rawhtml(
     <div class="field">
       <label for="url">Backend API URL</label>
       <input type="url" id="url" name="url"
-             placeholder="https://my-app.onrender.com/api"
+             placeholder="https://ai-smart-home-energy-monitoring-1.onrender.com/api"
              value="{{API_URL}}" required maxlength="255" autocomplete="off">
       <div class="hint">Include the <code>/api</code> path. No trailing slash.</div>
     </div>

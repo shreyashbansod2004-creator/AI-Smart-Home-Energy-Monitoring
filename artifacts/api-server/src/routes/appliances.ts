@@ -14,6 +14,8 @@ const router = Router();
 
 // ESP32 device key — commands are dispatched to this device
 const ESP32_DEVICE_KEY = "esp32_001";
+const MIN_RELAY_NUMBER = 1;
+const MAX_RELAY_NUMBER = 5;
 
 // Derived usage data (not stored in DB — computed from powerW)
 function deriveUsage(appliance: typeof appliancesTable.$inferSelect) {
@@ -49,6 +51,25 @@ router.patch("/appliances/:id/toggle", async (req, res): Promise<void> => {
   const body = ToggleApplianceBody.safeParse(req.body);
   if (!body.success) {
     res.status(400).json({ error: body.error.message });
+    return;
+  }
+
+  const [existing] = await db
+    .select({ relayNumber: appliancesTable.relayNumber })
+    .from(appliancesTable)
+    .where(eq(appliancesTable.id, params.data.id))
+    .limit(1);
+
+  if (!existing) {
+    res.status(404).json({ error: "Appliance not found" });
+    return;
+  }
+
+  if (
+    existing.relayNumber !== null &&
+    (existing.relayNumber < MIN_RELAY_NUMBER || existing.relayNumber > MAX_RELAY_NUMBER)
+  ) {
+    res.status(400).json({ error: "Appliance has an invalid relay assignment" });
     return;
   }
 
@@ -104,7 +125,12 @@ router.post("/appliances/turn-all-off", async (req, res): Promise<void> => {
 
   // Dispatch OFF commands for every appliance that has a relay
   const commandValues = rows
-    .filter((a) => a.relayNumber !== null)
+    .filter(
+      (a) =>
+        a.relayNumber !== null &&
+        a.relayNumber >= MIN_RELAY_NUMBER &&
+        a.relayNumber <= MAX_RELAY_NUMBER,
+    )
     .map((a) => ({
       deviceKey:    ESP32_DEVICE_KEY,
       applianceId:  a.id,

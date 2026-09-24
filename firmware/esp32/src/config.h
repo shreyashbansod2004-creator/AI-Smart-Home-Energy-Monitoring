@@ -9,6 +9,7 @@
 //   • Backend API URL  (e.g. https://my-app.onrender.com/api)
 // Values are stored in ESP32 NVS (non-volatile storage) via ConfigManager
 // and reloaded automatically on every subsequent boot.
+#define DEFAULT_API_URL  "https://ai-smart-home-energy-monitoring-1.onrender.com/api"
 
 // ─── Device Identity ──────────────────────────────────────────────────────────
 // Unique key sent with every reading; must match the device row in the DB.
@@ -25,9 +26,6 @@
 #define RELAY_PIN_3      14   // Kitchen Light
 #define RELAY_PIN_4      27   // Study Room Light
 #define RELAY_PIN_5      26   // Mini Fan
-#define RELAY_PIN_6      25   // Reserved
-#define RELAY_PIN_7      33   // Reserved
-#define RELAY_PIN_8      32   // Reserved
 
 // Number of active relays (appliances)
 #define RELAY_COUNT      5
