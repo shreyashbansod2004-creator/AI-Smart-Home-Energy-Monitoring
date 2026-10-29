@@ -8,7 +8,7 @@ import { Power } from 'lucide-react';
 export default function Appliances() {
   const queryClient = useQueryClient();
   const { data: appliances, isLoading } = useGetAppliances({
-    query: { queryKey: getGetAppliancesQueryKey() },
+    query: { queryKey: getGetAppliancesQueryKey(), refetchInterval: 2000 },
   });
 
   const toggleAppliance = useToggleAppliance();

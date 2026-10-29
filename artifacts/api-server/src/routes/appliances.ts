@@ -8,6 +8,7 @@ import {
   ToggleApplianceParams,
   ToggleApplianceResponse,
   TurnAllOffResponse,
+  getAppliancePowerRatingW,
 } from "@workspace/api-zod";
 
 const router = Router();
@@ -22,12 +23,13 @@ function deriveUsage(appliance: typeof appliancesTable.$inferSelect) {
   const hoursToday = 0; // Real running hours require tracking from actual readings
   const todayUsageKwh = parseFloat(((appliance.powerW / 1000) * hoursToday).toFixed(2));
   const monthlyCostInr = parseFloat((todayUsageKwh * 30 * 8.5).toFixed(0));
+  const ratedPowerW = getAppliancePowerRatingW(appliance.id, appliance.powerW);
   return {
     id: appliance.id,
     name: appliance.name,
     location: appliance.location,
     isOn: appliance.isOn,
-    powerW: appliance.isOn ? appliance.powerW : 0,
+    powerW: appliance.isOn ? ratedPowerW : 0,
     todayUsageKwh,
     monthlyCostInr,
     iconType: appliance.iconType,
@@ -73,55 +75,64 @@ router.patch("/appliances/:id/toggle", async (req, res): Promise<void> => {
     return;
   }
 
-  const [updated] = await db
-    .update(appliancesTable)
-    .set({ isOn: body.data.isOn, updatedAt: new Date() })
-    .where(eq(appliancesTable.id, params.data.id))
-    .returning();
+  if (existing.relayNumber === null || existing.relayNumber === undefined) {
+    const [updated] = await db
+      .update(appliancesTable)
+      .set({ isOn: body.data.isOn, updatedAt: new Date() })
+      .where(eq(appliancesTable.id, params.data.id))
+      .returning();
 
-  if (!updated) {
+    if (!updated) {
+      res.status(404).json({ error: "Appliance not found" });
+      return;
+    }
+
+    res.json(ToggleApplianceResponse.parse(deriveUsage(updated)));
+    return;
+  }
+
+  try {
+    // Keep the database state as the last acknowledged relay state. Pending
+    // commands are replaced so delayed/retried requests cannot be counted twice.
+    await db.delete(commandsTable).where(
+      and(
+        eq(commandsTable.deviceKey, ESP32_DEVICE_KEY),
+        eq(commandsTable.applianceId, params.data.id),
+        eq(commandsTable.acknowledged, false),
+      ),
+    );
+    await db.insert(commandsTable).values({
+      deviceKey:   ESP32_DEVICE_KEY,
+      applianceId: params.data.id,
+      relayNumber: existing.relayNumber,
+      command:     body.data.isOn ? "ON" : "OFF",
+      acknowledged: false,
+      createdAt:   new Date(),
+    });
+  } catch (err) {
+    console.error("Command dispatch error:", err);
+    res.status(503).json({ error: "Failed to queue appliance command" });
+    return;
+  }
+
+  // Return the current confirmed state. The row changes only after /commandAck.
+  const [confirmed] = await db
+    .select()
+    .from(appliancesTable)
+    .where(eq(appliancesTable.id, params.data.id))
+    .limit(1);
+  if (!confirmed) {
     res.status(404).json({ error: "Appliance not found" });
     return;
   }
 
-  // Dispatch a relay command to the ESP32 if this appliance has a relay assigned
-  if (updated.relayNumber !== null && updated.relayNumber !== undefined) {
-    try {
-      // "Latest-wins" queue: cancel any pending commands for this appliance
-      // before inserting the new one. Prevents stale backlog from blocking
-      // newer intents when the ESP32 is offline or slow to acknowledge.
-      await db.delete(commandsTable).where(
-        and(
-          eq(commandsTable.deviceKey, ESP32_DEVICE_KEY),
-          eq(commandsTable.applianceId, updated.id),
-          eq(commandsTable.acknowledged, false),
-        ),
-      );
-      await db.insert(commandsTable).values({
-        deviceKey:   ESP32_DEVICE_KEY,
-        applianceId: updated.id,
-        relayNumber: updated.relayNumber,
-        command:     body.data.isOn ? "ON" : "OFF",
-        acknowledged: false,
-        createdAt:   new Date(),
-      });
-    } catch (err) {
-      // Non-fatal: command dispatch failure shouldn't break the UI response
-      console.error("Command dispatch error:", err);
-    }
-  }
-
-  const result = ToggleApplianceResponse.parse(deriveUsage(updated));
+  const result = ToggleApplianceResponse.parse(deriveUsage(confirmed));
   res.json(result);
 });
 
 router.post("/appliances/turn-all-off", async (req, res): Promise<void> => {
   // Fetch all appliances to dispatch individual commands
   const rows = await db.select().from(appliancesTable);
-
-  await db
-    .update(appliancesTable)
-    .set({ isOn: false, updatedAt: new Date() });
 
   // Dispatch OFF commands for every appliance that has a relay
   const commandValues = rows
@@ -152,10 +163,15 @@ router.post("/appliances/turn-all-off", async (req, res): Promise<void> => {
       await db.insert(commandsTable).values(commandValues);
     } catch (err) {
       console.error("Bulk command dispatch error:", err);
+      res.status(503).json({ error: "Failed to queue appliance commands" });
+      return;
     }
   }
 
-  const result = TurnAllOffResponse.parse({ success: true, message: "All appliances turned off" });
+  const result = TurnAllOffResponse.parse({
+    success: true,
+    message: "OFF commands queued; appliance states update after device acknowledgement",
+  });
   res.json(result);
 });
 
