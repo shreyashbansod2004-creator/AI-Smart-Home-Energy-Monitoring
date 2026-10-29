@@ -122,7 +122,13 @@ export const GetAppliancesResponseItem = zod.object({
   "todayUsageKwh": zod.number(),
   "monthlyCostInr": zod.number(),
   "iconType": zod.string(),
-  "runningHoursToday": zod.number()
+  "runningHoursToday": zod.number(),
+  "pendingCommand": zod.union([zod.object({
+  "commandId": zod.number(),
+  "state": zod.enum(['ON', 'OFF']),
+  "status": zod.enum(['awaiting_ack', 'timed_out']),
+  "createdAt": zod.coerce.date()
+}),zod.null()])
 })
 export const GetAppliancesResponse = zod.array(GetAppliancesResponseItem)
 
@@ -147,7 +153,13 @@ export const ToggleApplianceResponse = zod.object({
   "todayUsageKwh": zod.number(),
   "monthlyCostInr": zod.number(),
   "iconType": zod.string(),
-  "runningHoursToday": zod.number()
+  "runningHoursToday": zod.number(),
+  "pendingCommand": zod.union([zod.object({
+  "commandId": zod.number(),
+  "state": zod.enum(['ON', 'OFF']),
+  "status": zod.enum(['awaiting_ack', 'timed_out']),
+  "createdAt": zod.coerce.date()
+}),zod.null()])
 })
 
 

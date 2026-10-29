@@ -81,6 +81,29 @@ export interface EnergyAnalytics {
   hourlyPattern: EnergyDataPoint[];
 }
 
+export type PendingApplianceCommandState = typeof PendingApplianceCommandState[keyof typeof PendingApplianceCommandState];
+
+
+export const PendingApplianceCommandState = {
+  ON: 'ON',
+  OFF: 'OFF',
+} as const;
+
+export type PendingApplianceCommandStatus = typeof PendingApplianceCommandStatus[keyof typeof PendingApplianceCommandStatus];
+
+
+export const PendingApplianceCommandStatus = {
+  awaiting_ack: 'awaiting_ack',
+  timed_out: 'timed_out',
+} as const;
+
+export interface PendingApplianceCommand {
+  commandId: number;
+  state: PendingApplianceCommandState;
+  status: PendingApplianceCommandStatus;
+  createdAt: string;
+}
+
 export interface Appliance {
   id: string;
   name: string;
@@ -91,6 +114,7 @@ export interface Appliance {
   monthlyCostInr: number;
   iconType: string;
   runningHoursToday: number;
+  pendingCommand: PendingApplianceCommand | null;
 }
 
 export interface ApplianceToggleInput {

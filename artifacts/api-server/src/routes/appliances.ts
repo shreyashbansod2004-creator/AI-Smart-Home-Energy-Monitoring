@@ -1,14 +1,16 @@
 import { Router } from "express";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { db, appliancesTable, commandsTable } from "@workspace/db";
 import {
   GetAppliancesResponse,
-  GetAppliancesResponseItem,
   ToggleApplianceBody,
   ToggleApplianceParams,
   ToggleApplianceResponse,
   TurnAllOffResponse,
   getAppliancePowerRatingW,
+  getCurrentPendingCommands,
+  isFreshDuplicateCommand,
+  toPendingApplianceCommand,
 } from "@workspace/api-zod";
 
 const router = Router();
@@ -19,7 +21,10 @@ const MIN_RELAY_NUMBER = 1;
 const MAX_RELAY_NUMBER = 5;
 
 // Derived usage data (not stored in DB — computed from powerW)
-function deriveUsage(appliance: typeof appliancesTable.$inferSelect) {
+function deriveUsage(
+  appliance: typeof appliancesTable.$inferSelect,
+  pendingCommand: ReturnType<typeof toPendingApplianceCommand> | null = null,
+) {
   const hoursToday = 0; // Real running hours require tracking from actual readings
   const todayUsageKwh = parseFloat(((appliance.powerW / 1000) * hoursToday).toFixed(2));
   const monthlyCostInr = parseFloat((todayUsageKwh * 30 * 8.5).toFixed(0));
@@ -34,12 +39,25 @@ function deriveUsage(appliance: typeof appliancesTable.$inferSelect) {
     monthlyCostInr,
     iconType: appliance.iconType,
     runningHoursToday: hoursToday,
+    pendingCommand,
   };
 }
 
 router.get("/appliances", async (req, res): Promise<void> => {
-  const rows = await db.select().from(appliancesTable);
-  const result = GetAppliancesResponse.parse(rows.map(deriveUsage));
+  const [rows, commands] = await Promise.all([
+    db.select().from(appliancesTable),
+    db.select().from(commandsTable).where(eq(commandsTable.deviceKey, ESP32_DEVICE_KEY)),
+  ]);
+  const pendingByAppliance = getCurrentPendingCommands(commands);
+  const result = GetAppliancesResponse.parse(
+    rows.map((appliance) => {
+      const pending = pendingByAppliance.get(appliance.id);
+      return deriveUsage(
+        appliance,
+        pending ? toPendingApplianceCommand(pending) : null,
+      );
+    }),
+  );
   res.json(result);
 });
 
@@ -91,27 +109,57 @@ router.patch("/appliances/:id/toggle", async (req, res): Promise<void> => {
     return;
   }
 
+  let queuedCommand: typeof commandsTable.$inferSelect | null;
   try {
-    // Keep the database state as the last acknowledged relay state. Pending
-    // commands are replaced so delayed/retried requests cannot be counted twice.
-    await db.delete(commandsTable).where(
-      and(
-        eq(commandsTable.deviceKey, ESP32_DEVICE_KEY),
-        eq(commandsTable.applianceId, params.data.id),
-        eq(commandsTable.acknowledged, false),
-      ),
-    );
-    await db.insert(commandsTable).values({
-      deviceKey:   ESP32_DEVICE_KEY,
-      applianceId: params.data.id,
-      relayNumber: existing.relayNumber,
-      command:     body.data.isOn ? "ON" : "OFF",
-      acknowledged: false,
-      createdAt:   new Date(),
+    queuedCommand = await db.transaction(async (tx) => {
+      // Serialize submissions for this appliance so retries reuse the same
+      // fresh command instead of creating duplicate queue entries.
+      const [lockedAppliance] = await tx
+        .select({ relayNumber: appliancesTable.relayNumber })
+        .from(appliancesTable)
+        .where(eq(appliancesTable.id, params.data.id))
+        .for("update");
+      if (lockedAppliance?.relayNumber === null || lockedAppliance?.relayNumber === undefined) {
+        return null;
+      }
+
+      const [latestCommand] = await tx
+        .select()
+        .from(commandsTable)
+        .where(
+          and(
+            eq(commandsTable.deviceKey, ESP32_DEVICE_KEY),
+            eq(commandsTable.applianceId, params.data.id),
+          ),
+        )
+        .orderBy(desc(commandsTable.id))
+        .limit(1);
+
+      const requestedCommand = body.data.isOn ? "ON" : "OFF";
+      if (isFreshDuplicateCommand(latestCommand, requestedCommand)) {
+        return latestCommand;
+      }
+
+      const [created] = await tx
+        .insert(commandsTable)
+        .values({
+          deviceKey: ESP32_DEVICE_KEY,
+          applianceId: params.data.id,
+          relayNumber: lockedAppliance.relayNumber,
+          command: requestedCommand,
+          acknowledged: false,
+          createdAt: new Date(),
+        })
+        .returning();
+      return created ?? null;
     });
   } catch (err) {
     console.error("Command dispatch error:", err);
     res.status(503).json({ error: "Failed to queue appliance command" });
+    return;
+  }
+  if (!queuedCommand) {
+    res.status(409).json({ error: "Appliance relay assignment changed; retry the command" });
     return;
   }
 
@@ -126,7 +174,13 @@ router.patch("/appliances/:id/toggle", async (req, res): Promise<void> => {
     return;
   }
 
-  const result = ToggleApplianceResponse.parse(deriveUsage(confirmed));
+  const currentPending = getCurrentPendingCommands([queuedCommand]).get(params.data.id);
+  const result = ToggleApplianceResponse.parse(
+    deriveUsage(
+      confirmed,
+      currentPending ? toPendingApplianceCommand(currentPending) : null,
+    ),
+  );
   res.json(result);
 });
 
@@ -153,14 +207,26 @@ router.post("/appliances/turn-all-off", async (req, res): Promise<void> => {
 
   if (commandValues.length > 0) {
     try {
-      // Cancel all pending commands before issuing a bulk OFF sweep
-      await db.delete(commandsTable).where(
-        and(
-          eq(commandsTable.deviceKey, ESP32_DEVICE_KEY),
-          eq(commandsTable.acknowledged, false),
-        ),
-      );
-      await db.insert(commandsTable).values(commandValues);
+      await db.transaction(async (tx) => {
+        // Keep command rows so acknowledgements already in flight remain valid.
+        // Only add fresh OFF intents where an equivalent command is not active.
+        await tx.select({ id: appliancesTable.id }).from(appliancesTable).for("update");
+        const commands = await tx
+          .select()
+          .from(commandsTable)
+          .where(eq(commandsTable.deviceKey, ESP32_DEVICE_KEY));
+        const pendingByAppliance = getCurrentPendingCommands(commands);
+        const missingCommands = commandValues.filter((command) => {
+          const pending = pendingByAppliance.get(command.applianceId);
+          return !(
+            pending?.command === "OFF" &&
+            pending.status === "awaiting_ack"
+          );
+        });
+        if (missingCommands.length > 0) {
+          await tx.insert(commandsTable).values(missingCommands);
+        }
+      });
     } catch (err) {
       console.error("Bulk command dispatch error:", err);
       res.status(503).json({ error: "Failed to queue appliance commands" });

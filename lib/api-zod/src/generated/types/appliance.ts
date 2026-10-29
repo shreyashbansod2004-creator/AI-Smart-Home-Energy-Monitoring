@@ -5,6 +5,7 @@
  * AI Smart Home Energy Monitoring API
  * OpenAPI spec version: 0.1.0
  */
+import type { PendingApplianceCommand } from './pendingApplianceCommand';
 
 export interface Appliance {
   id: string;
@@ -16,4 +17,5 @@ export interface Appliance {
   monthlyCostInr: number;
   iconType: string;
   runningHoursToday: number;
+  pendingCommand: PendingApplianceCommand | null;
 }
