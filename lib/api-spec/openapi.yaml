@@ -445,6 +445,26 @@ components:
         - savingInr
         - severity
 
+    PendingApplianceCommand:
+      type: object
+      properties:
+        commandId:
+          type: integer
+        state:
+          type: string
+          enum: [ON, OFF]
+        status:
+          type: string
+          enum: [awaiting_ack, timed_out]
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - commandId
+        - state
+        - status
+        - createdAt
+
     Appliance:
       type: object
       properties:
@@ -466,6 +486,10 @@ components:
           type: string
         runningHoursToday:
           type: number
+        pendingCommand:
+          anyOf:
+            - $ref: "#/components/schemas/PendingApplianceCommand"
+            - type: "null"
       required:
         - id
         - name
@@ -476,6 +500,7 @@ components:
         - monthlyCostInr
         - iconType
         - runningHoursToday
+        - pendingCommand
 
     ApplianceToggleInput:
       type: object

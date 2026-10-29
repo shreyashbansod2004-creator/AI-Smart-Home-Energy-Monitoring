@@ -1,4 +1,4 @@
-import { Lightbulb, Fan, Tv, Snowflake, Droplet, Flame, Zap } from 'lucide-react';
+import { Lightbulb, Fan, Tv, Snowflake, Droplet, Flame, Zap, LoaderCircle, TriangleAlert } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Appliance } from '@workspace/api-client-react';
 import { cn } from '@/lib/utils';
@@ -17,10 +17,12 @@ interface ApplianceCardProps {
   appliance: Appliance;
   onToggle: (id: string, isOn: boolean) => void;
   isPending?: boolean;
+  commandError?: string;
 }
 
-export function ApplianceCard({ appliance, onToggle, isPending }: ApplianceCardProps) {
+export function ApplianceCard({ appliance, onToggle, isPending, commandError }: ApplianceCardProps) {
   const Icon = iconMap[appliance.iconType] || iconMap.default;
+  const pendingCommand = appliance.pendingCommand;
 
   return (
     <div
@@ -41,11 +43,46 @@ export function ApplianceCard({ appliance, onToggle, isPending }: ApplianceCardP
         <Switch
           checked={appliance.isOn}
           onCheckedChange={(checked) => onToggle(appliance.id, checked)}
-          disabled={isPending}
+          disabled={isPending || pendingCommand?.status === 'awaiting_ack'}
         />
       </div>
       <h3 className="text-lg font-semibold text-foreground mb-1">{appliance.name}</h3>
       <p className="text-sm text-muted-foreground mb-3">{appliance.location}</p>
+      {(isPending || pendingCommand || commandError) && (
+        <div
+          className={cn(
+            'flex items-start gap-2 text-xs mb-3',
+            commandError || pendingCommand?.status === 'timed_out'
+              ? 'text-amber-600 dark:text-amber-400'
+              : 'text-muted-foreground',
+          )}
+          role={commandError ? 'alert' : 'status'}
+          aria-live="polite"
+        >
+          {isPending ? (
+            <>
+              <LoaderCircle className="w-4 h-4 shrink-0 animate-spin" />
+              <span>Sending command…</span>
+            </>
+          ) : commandError ? (
+            <>
+              <TriangleAlert className="w-4 h-4 shrink-0" />
+              <span>{commandError}</span>
+            </>
+          ) : pendingCommand?.status === 'timed_out' ? (
+            <>
+              <TriangleAlert className="w-4 h-4 shrink-0" />
+              <span>
+                No acknowledgement in 30 seconds. Check the device; the switch shows the last confirmed state.
+              </span>
+            </>
+          ) : pendingCommand ? (
+            <span>
+              Command queued for {pendingCommand.state}; pending device acknowledgement.
+            </span>
+          ) : null}
+        </div>
+      )}
       <div className="grid grid-cols-3 gap-3 pt-3 border-t border-card-border">
         <div>
           <p className="text-xs text-muted-foreground">Power</p>

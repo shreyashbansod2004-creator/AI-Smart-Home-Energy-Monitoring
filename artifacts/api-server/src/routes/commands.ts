@@ -1,12 +1,14 @@
 import { Router } from "express";
 import { z } from "zod";
-import { eq, and, lt, gt, or, gte, lte } from "drizzle-orm";
+import { eq, and, gt, desc } from "drizzle-orm";
 import { db, commandsTable, appliancesTable } from "@workspace/db";
-import { matchesCommandAcknowledgement } from "@workspace/api-zod";
+import {
+  getDeliverableApplianceCommands,
+  matchesCommandAcknowledgement,
+  shouldApplyAcknowledgement,
+} from "@workspace/api-zod";
 
 const router = Router();
-const MIN_RELAY_NUMBER = 1;
-const MAX_RELAY_NUMBER = 5;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/commands/:deviceKey
@@ -16,47 +18,13 @@ const MAX_RELAY_NUMBER = 5;
 router.get("/commands/:deviceKey", async (req, res): Promise<void> => {
   const { deviceKey } = req.params;
   try {
-    // Prune commands older than 30 s that were never acknowledged.
-    // These are stale (ESP32 was offline or missed the window); fresh toggles
-    // take priority once the expired entries are cleared.
-    const ttlCutoff = new Date(Date.now() - 30_000);
-    await db
-      .delete(commandsTable)
-      .where(
-        and(
-          eq(commandsTable.deviceKey, deviceKey),
-          eq(commandsTable.acknowledged, false),
-          lt(commandsTable.createdAt, ttlCutoff),
-        ),
-      );
-
-    // Invalid relay assignments are never executable by the ESP32.
-    await db
-      .delete(commandsTable)
-      .where(
-        and(
-          eq(commandsTable.deviceKey, deviceKey),
-          eq(commandsTable.acknowledged, false),
-          or(
-            lt(commandsTable.relayNumber, MIN_RELAY_NUMBER),
-            gt(commandsTable.relayNumber, MAX_RELAY_NUMBER),
-          ),
-        ),
-      );
-
-    const [cmd] = await db
+    // Keep the receipt rows for late acknowledgements. The latest-wins helper
+    // hides superseded commands and only delivers a request within its TTL.
+    const commands = await db
       .select()
       .from(commandsTable)
-      .where(
-        and(
-          eq(commandsTable.deviceKey, deviceKey),
-          eq(commandsTable.acknowledged, false),
-          gte(commandsTable.relayNumber, MIN_RELAY_NUMBER),
-          lte(commandsTable.relayNumber, MAX_RELAY_NUMBER),
-        ),
-      )
-      .orderBy(commandsTable.createdAt)
-      .limit(1);
+      .where(eq(commandsTable.deviceKey, deviceKey));
+    const [cmd] = getDeliverableApplianceCommands(commands);
 
     if (!cmd) {
       res.status(204).send(); // No pending command
@@ -123,10 +91,26 @@ router.post("/commandAck", async (req, res): Promise<void> => {
 
       if (!updated) return "missing" as const;
 
-      await tx
-        .update(appliancesTable)
-        .set({ isOn: state === "ON", updatedAt: new Date() })
-        .where(eq(appliancesTable.id, command.applianceId));
+      const [newerAcknowledgedCommand] = await tx
+        .select({ id: commandsTable.id })
+        .from(commandsTable)
+        .where(
+          and(
+            eq(commandsTable.deviceKey, command.deviceKey),
+            eq(commandsTable.applianceId, command.applianceId),
+            eq(commandsTable.acknowledged, true),
+            gt(commandsTable.id, command.id),
+          ),
+        )
+        .orderBy(desc(commandsTable.id))
+        .limit(1);
+
+      if (shouldApplyAcknowledgement(command.id, newerAcknowledgedCommand?.id ?? null)) {
+        await tx
+          .update(appliancesTable)
+          .set({ isOn: state === "ON", updatedAt: new Date() })
+          .where(eq(appliancesTable.id, command.applianceId));
+      }
 
       return "acknowledged" as const;
     });
