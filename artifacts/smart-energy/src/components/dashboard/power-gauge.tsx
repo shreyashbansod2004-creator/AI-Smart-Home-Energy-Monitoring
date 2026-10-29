@@ -1,12 +1,15 @@
 import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts';
 
 interface PowerGaugeProps {
-  currentPowerW: number;
+  currentPowerW: number | null;
   maxPowerW?: number;
 }
 
 export function PowerGauge({ currentPowerW, maxPowerW = 5000 }: PowerGaugeProps) {
-  const percentage = Math.min((currentPowerW / maxPowerW) * 100, 100);
+  const percentage =
+    currentPowerW === null
+      ? 0
+      : Math.min((Math.max(currentPowerW, 0) / maxPowerW) * 100, 100);
   
   // Color logic: green -> yellow -> orange -> red
   let color = '#22c55e'; // green
@@ -43,9 +46,11 @@ export function PowerGauge({ currentPowerW, maxPowerW = 5000 }: PowerGaugeProps)
         </RadialBarChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className="text-5xl font-bold text-foreground">{currentPowerW}</div>
+        <div className="text-5xl font-bold text-foreground">
+          {currentPowerW === null ? '—' : currentPowerW}
+        </div>
         <div className="text-sm text-muted-foreground">W</div>
-        <div className="text-xs text-muted-foreground mt-1">Current Power</div>
+        <div className="text-xs text-muted-foreground mt-1">Estimated Power</div>
       </div>
     </div>
   );

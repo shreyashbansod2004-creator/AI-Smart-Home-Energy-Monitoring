@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { z } from "zod";
 import { eq, and, lt, gt, or, gte, lte } from "drizzle-orm";
-import { db, commandsTable } from "@workspace/db";
+import { db, commandsTable, appliancesTable } from "@workspace/db";
+import { matchesCommandAcknowledgement } from "@workspace/api-zod";
 
 const router = Router();
 const MIN_RELAY_NUMBER = 1;
@@ -92,20 +93,54 @@ router.post("/commandAck", async (req, res): Promise<void> => {
     return;
   }
 
-  const { commandId } = parsed.data;
+  const { commandId, relayNum, state } = parsed.data;
   try {
-    const [updated] = await db
-      .update(commandsTable)
-      .set({ acknowledged: true, executedAt: new Date() })
-      .where(eq(commandsTable.id, commandId))
-      .returning();
+    const result = await db.transaction(async (tx) => {
+      const [command] = await tx
+        .select()
+        .from(commandsTable)
+        .where(eq(commandsTable.id, commandId))
+        .limit(1);
 
-    if (!updated) {
+      if (!command) return "missing" as const;
+      if (!matchesCommandAcknowledgement(command, { relayNum, state })) {
+        return "mismatch" as const;
+      }
+      // Duplicate acknowledgements are harmless and must not replay an older
+      // state over a newer command.
+      if (command.acknowledged) return "already-acknowledged" as const;
+
+      const [updated] = await tx
+        .update(commandsTable)
+        .set({ acknowledged: true, executedAt: new Date() })
+        .where(
+          and(
+            eq(commandsTable.id, commandId),
+            eq(commandsTable.acknowledged, false),
+          ),
+        )
+        .returning();
+
+      if (!updated) return "missing" as const;
+
+      await tx
+        .update(appliancesTable)
+        .set({ isOn: state === "ON", updatedAt: new Date() })
+        .where(eq(appliancesTable.id, command.applianceId));
+
+      return "acknowledged" as const;
+    });
+
+    if (result === "missing") {
       res.status(404).json({ error: "Command not found" });
       return;
     }
+    if (result === "mismatch") {
+      res.status(409).json({ error: "Acknowledgement does not match the pending command" });
+      return;
+    }
 
-    res.json({ success: true, commandId: updated.id });
+    res.json({ success: true, commandId });
   } catch (err) {
     console.error("POST /commandAck error:", err);
     res.status(500).json({ error: "Failed to acknowledge command" });

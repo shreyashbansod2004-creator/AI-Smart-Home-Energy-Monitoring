@@ -11,6 +11,7 @@ import {
 import {
   GetDashboardSummaryResponse,
   GetLiveMetricsResponse,
+  estimatePowerFromConfirmedStates,
 } from "@workspace/api-zod";
 
 const router = Router();
@@ -23,9 +24,13 @@ async function getDefaultDevice() {
 router.get("/dashboard/summary", async (req, res): Promise<void> => {
   try {
     const device = await getDefaultDevice();
+    const appliances = await db.select().from(appliancesTable);
 
-    // ── Live power from latest reading ──────────────────────────────────────
-    let currentPowerW = 0;
+    // Active power is estimated from the full set of acknowledged relay states.
+    // The ESP32's V_RMS × I_RMS × assumed-PF value is not a validated real-power
+    // measurement, so keep sensor voltage/current separate from this estimate.
+    const currentPowerW = estimatePowerFromConfirmedStates(appliances) ?? 0;
+    let sensorPowerW = 0;
     let voltageV = 0;
     let currentA = 0;
 
@@ -37,7 +42,7 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
         .orderBy(desc(readingsTable.recordedAt))
         .limit(1);
       if (latest) {
-        currentPowerW = Math.round(latest.powerWatts);
+        sensorPowerW = Math.round(latest.powerWatts);
         voltageV = latest.voltageV ?? 0;
         currentA = latest.currentA ?? 0;
       }
@@ -136,7 +141,6 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
     }
 
     // ── Active appliance count ───────────────────────────────────────────────
-    const appliances = await db.select().from(appliancesTable);
     const activeCount = appliances.filter((a) => a.isOn).length;
 
     const summary = GetDashboardSummaryResponse.parse({
@@ -146,7 +150,9 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
       estimatedBillInr,
       voltageV,
       currentA,
-      powerFactorKw: parseFloat((currentPowerW / 1000).toFixed(2)),
+      // Preserve the existing numeric API field; the dashboard no longer
+      // presents this power-derived value as a measured power factor.
+      powerFactorKw: parseFloat((sensorPowerW / 1000).toFixed(2)),
       todayChangePercent,
       monthChangePercent,
       billChangePercent,
@@ -166,12 +172,14 @@ router.get("/dashboard/live", async (req, res): Promise<void> => {
   try {
     const device = await getDefaultDevice();
     const now = new Date();
+    const appliances = await db.select().from(appliancesTable);
 
     // ── Last 20 readings for the sparkline ──────────────────────────────────
     let history: { time: string; powerW: number }[] = [];
-    let powerW = 0;
+    const powerW = estimatePowerFromConfirmedStates(appliances) ?? 0;
     let voltageV = 0;
     let currentA = 0;
+    let timestamp = now.toISOString();
 
     if (device) {
       const rows = await db
@@ -193,7 +201,7 @@ router.get("/dashboard/live", async (req, res): Promise<void> => {
       // Pull voltage and current from the latest reading
       const latest = ordered.at(-1);
       if (latest) {
-        powerW = Math.round(latest.powerWatts);
+        timestamp = latest.recordedAt.toISOString();
         voltageV = latest.voltageV ?? 0;
         currentA = latest.currentA ?? 0;
       }
@@ -202,7 +210,7 @@ router.get("/dashboard/live", async (req, res): Promise<void> => {
     // No readings: history stays empty and all metrics are 0 (device offline/not yet connected)
 
     const metrics = GetLiveMetricsResponse.parse({
-      timestamp: now.toISOString(),
+      timestamp,
       powerW,
       voltageV,
       currentA,

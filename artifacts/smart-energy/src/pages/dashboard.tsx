@@ -13,9 +13,12 @@ import {
   getGetDashboardSummaryQueryKey,
   getGetLiveMetricsQueryKey,
   getGetEnergyConsumptionQueryKey,
+  getGetAppliancesQueryKey,
   useTurnAllOff,
   useToggleAppliance,
 } from '@workspace/api-client-react';
+import { estimatePowerFromConfirmedStates } from '@workspace/api-zod';
+import { isFreshSensorTimestamp, isValidCurrentA, isValidVoltageV } from '@/lib/sensor-readings';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ApplianceCard } from '@/components/appliances/appliance-card';
 import { useQueryClient } from '@tanstack/react-query';
@@ -38,7 +41,12 @@ export default function Dashboard() {
 
   const { data: energyData } = useGetEnergyConsumption({ period }, { query: { enabled: true, queryKey: getGetEnergyConsumptionQueryKey({ period }) } });
 
-  const { data: appliances } = useGetAppliances();
+  const { data: appliances } = useGetAppliances({
+    query: {
+      queryKey: getGetAppliancesQueryKey(),
+      refetchInterval: 3000,
+    },
+  });
 
   const turnAllOff = useTurnAllOff();
   const toggleAppliance = useToggleAppliance();
@@ -49,6 +57,7 @@ export default function Dashboard() {
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetAppliancesQueryKey() });
         },
       }
     );
@@ -58,11 +67,24 @@ export default function Dashboard() {
     turnAllOff.mutate(undefined, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getGetDashboardSummaryQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetAppliancesQueryKey() });
       },
     });
   };
 
   const activeAppliances = appliances?.filter((a) => a.isOn).slice(0, 3) || [];
+  const estimatedPowerW = estimatePowerFromConfirmedStates(appliances ?? []);
+  const sensorReadingFresh = isFreshSensorTimestamp(liveMetrics?.timestamp);
+  const voltageText =
+    sensorReadingFresh && isValidVoltageV(liveMetrics?.voltageV)
+      ? liveMetrics.voltageV.toFixed(1)
+      : '—';
+  const currentText =
+    sensorReadingFresh &&
+    isValidVoltageV(liveMetrics?.voltageV) &&
+    isValidCurrentA(liveMetrics?.currentA)
+      ? liveMetrics.currentA.toFixed(2)
+      : '—';
 
   if (summaryLoading) {
     return (
@@ -89,10 +111,10 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
           icon={Zap}
-          label="Current Power"
-          value={`${summary?.currentPowerW || 0} W`}
-          subtitle={`Voltage: ${summary?.voltageV || 0}V  •  Current: ${summary?.currentA || 0}A`}
-          badge="Live"
+          label="Estimated Power"
+          value={estimatedPowerW === null ? '—' : `${estimatedPowerW} W`}
+          subtitle="Estimated from acknowledged relay states"
+          badge={estimatedPowerW === null ? 'Unavailable' : 'Estimate'}
         />
         <MetricCard
           icon={Activity}
@@ -130,24 +152,24 @@ export default function Dashboard() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">Current Usage Overview</h2>
             <Badge variant="outline" className="bg-primary/20 text-primary border-primary/30">
-              Live
+              Estimate
             </Badge>
           </div>
           <div className="h-64">
-            <PowerGauge currentPowerW={liveMetrics?.powerW || summary?.currentPowerW || 0} />
+            <PowerGauge currentPowerW={estimatedPowerW} />
           </div>
           <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-card-border">
             <div>
               <p className="text-xs text-muted-foreground">Voltage</p>
-              <p className="text-lg font-semibold text-foreground">{summary?.voltageV || 0} V</p>
+              <p className="text-lg font-semibold text-foreground">{voltageText} V</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Current</p>
-              <p className="text-lg font-semibold text-foreground">{summary?.currentA.toFixed(2) || 0} A</p>
+              <p className="text-lg font-semibold text-foreground">{currentText} A</p>
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Power Factor</p>
-              <p className="text-lg font-semibold text-foreground">{summary?.powerFactorKw.toFixed(2) || 0} kW</p>
+              <p className="text-lg font-semibold text-foreground">—</p>
             </div>
           </div>
         </div>
