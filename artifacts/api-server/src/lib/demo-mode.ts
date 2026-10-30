@@ -4,8 +4,13 @@ import {
   type ApplianceRelayState,
 } from "@workspace/api-zod";
 
-export const DEMO_VOLTAGE_V = 230;
+export const DEMO_NOMINAL_VOLTAGE_V = 230;
 export const DEMO_POWER_FACTOR = 0.9;
+
+/** Small deterministic fluctuation around nominal mains voltage (227–233 V). */
+export function getDemoVoltageV(nowMs: number): number {
+  return DEMO_NOMINAL_VOLTAGE_V + Math.sin(nowMs / 30_000) * 3;
+}
 export const DEMO_MAX_SAMPLE_GAP_MS = 5_000;
 
 /** Demo mode is deliberately opt-in. Only the exact string "true" enables it. */
@@ -36,7 +41,11 @@ export class DemoEnergyLedger {
     nowMs = Date.now(),
   ): SimulatedElectricalReadings | null {
     const powerW = estimatePowerFromConfirmedStates(appliances);
-    if (powerW === null || !Number.isFinite(nowMs)) return null;
+    if (
+      powerW === null ||
+      !Number.isFinite(nowMs) ||
+      !Number.isFinite(new Date(nowMs).getTime())
+    ) return null;
 
     if (this.previousPowerW !== null && this.previousAtMs !== null) {
       const elapsedMs = nowMs - this.previousAtMs;
@@ -48,10 +57,12 @@ export class DemoEnergyLedger {
     this.previousPowerW = powerW;
     this.previousAtMs = nowMs;
 
+    const voltageV = getDemoVoltageV(nowMs);
+
     return {
       powerW,
-      voltageV: DEMO_VOLTAGE_V,
-      currentA: powerW / (DEMO_VOLTAGE_V * DEMO_POWER_FACTOR),
+      voltageV,
+      currentA: powerW === 0 ? 0 : powerW / (voltageV * DEMO_POWER_FACTOR),
       energyKwh: this.energyWh / 1_000,
       sampledAt: new Date(nowMs).toISOString(),
     };
