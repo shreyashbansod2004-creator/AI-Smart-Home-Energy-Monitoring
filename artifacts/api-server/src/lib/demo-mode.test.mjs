@@ -55,6 +55,17 @@ describe("demo mode safety", () => {
     assert.ok(Math.abs(ledger.getEnergyKwh() - (15.5 * 4_000 / 3_600_000_000)) < 1e-12);
   });
 
+  it("keeps session chart history in memory and isolated per ledger", () => {
+    const firstSession = new DemoEnergyLedger();
+    const secondSession = new DemoEnergyLedger();
+    firstSession.sample(allOn, 1_000_000);
+    firstSession.sample(allOff, 1_003_600);
+    assert.equal(firstSession.getHistory().length, 2);
+    assert.equal(firstSession.getHistory()[1].energyKwh, 15.5 / 1_000 / 1_000);
+    assert.deepEqual(secondSession.getHistory(), []);
+    assert.equal(secondSession.getEnergyKwh(), 0);
+  });
+
   it("starts with zero power and energy when all appliances are off", () => {
     const ledger = new DemoEnergyLedger();
     const reading = ledger.sample(allOff, 1_000_000);
