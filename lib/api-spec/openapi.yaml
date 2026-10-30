@@ -50,6 +50,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DashboardSummary"
+        "503":
+          description: Demo mode requires a complete set of confirmed appliance states
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                required: [error]
 
   /dashboard/live:
     get:
@@ -63,6 +73,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LiveMetrics"
+        "503":
+          description: Demo mode requires a complete set of confirmed appliance states
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                required: [error]
 
   /energy/consumption:
     get:
@@ -304,6 +324,9 @@ components:
           type: integer
         totalApplianceCount:
           type: integer
+        demoMode:
+          type: boolean
+          description: True when live electrical readings are simulated from confirmed relay states
       required:
         - currentPowerW
         - todayEnergyKwh
@@ -337,6 +360,9 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PowerHistoryPoint"
+        demoMode:
+          type: boolean
+          description: True when live electrical readings are simulated from confirmed relay states
       required:
         - timestamp
         - powerW

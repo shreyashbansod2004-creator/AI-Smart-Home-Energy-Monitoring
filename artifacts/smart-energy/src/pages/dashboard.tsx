@@ -28,11 +28,11 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
 
-  const { data: summary, isLoading: summaryLoading } = useGetDashboardSummary({
+  const { data: summary, isLoading: summaryLoading, isError: summaryError } = useGetDashboardSummary({
     query: { queryKey: getGetDashboardSummaryQueryKey(), refetchInterval: 10000 },
   });
 
-  const { data: liveMetrics } = useGetLiveMetrics({
+  const { data: liveMetrics, isError: liveMetricsError } = useGetLiveMetrics({
     query: {
       queryKey: getGetLiveMetricsQueryKey(),
       refetchInterval: 3000,
@@ -73,8 +73,10 @@ export default function Dashboard() {
   };
 
   const activeAppliances = appliances?.filter((a) => a.isOn).slice(0, 3) || [];
-  const estimatedPowerW = estimatePowerFromConfirmedStates(appliances ?? []);
-  const sensorReadingFresh = isFreshSensorTimestamp(liveMetrics?.timestamp);
+  const estimatedPowerW = summaryError || liveMetricsError
+    ? null
+    : estimatePowerFromConfirmedStates(appliances ?? []);
+  const sensorReadingFresh = !liveMetricsError && isFreshSensorTimestamp(liveMetrics?.timestamp);
   const voltageText =
     sensorReadingFresh && isValidVoltageV(liveMetrics?.voltageV)
       ? liveMetrics.voltageV.toFixed(1)
@@ -105,6 +107,14 @@ export default function Dashboard() {
       <div>
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">Welcome back, monitor your energy usage</p>
+        {summary?.demoMode && (
+          <Badge variant="outline" className="mt-2">DEMO MODE – SIMULATED READINGS</Badge>
+        )}
+        {(summaryError || liveMetricsError) && (
+          <p role="alert" className="text-sm text-destructive mt-2">
+            Live readings are unavailable. If Demo Mode is enabled, verify that all five confirmed appliance states are available.
+          </p>
+        )}
       </div>
 
       {/* Metrics Cards */}
@@ -118,8 +128,8 @@ export default function Dashboard() {
         />
         <MetricCard
           icon={Activity}
-          label="Today's Energy"
-          value={`${summary?.todayEnergyKwh.toFixed(2) || 0} kWh`}
+          label={summary?.demoMode ? 'Demo Session Energy' : "Today's Energy"}
+          value={summary ? `${summary.todayEnergyKwh.toFixed(2)} kWh` : '—'}
           trend={{
             value: summary?.todayChangePercent || 0,
             isPositive: (summary?.todayChangePercent || 0) >= 0,
@@ -128,7 +138,7 @@ export default function Dashboard() {
         <MetricCard
           icon={Calendar}
           label="This Month (So Far)"
-          value={`${summary?.monthEnergyKwh.toFixed(1) || 0} kWh`}
+          value={summary ? `${summary.monthEnergyKwh.toFixed(1)} kWh` : '—'}
           trend={{
             value: summary?.monthChangePercent || 0,
             isPositive: (summary?.monthChangePercent || 0) >= 0,
@@ -137,7 +147,7 @@ export default function Dashboard() {
         <MetricCard
           icon={IndianRupee}
           label="Est. Monthly Bill"
-          value={`₹${summary?.estimatedBillInr.toLocaleString() || 0}`}
+          value={summary ? `₹${summary.estimatedBillInr.toLocaleString()}` : '—'}
           trend={{
             value: summary?.billChangePercent || 0,
             isPositive: (summary?.billChangePercent || 0) <= 0,

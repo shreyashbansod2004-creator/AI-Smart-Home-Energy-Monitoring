@@ -23,6 +23,7 @@ export function estimatePowerFromConfirmedStates(
   appliances: readonly ApplianceRelayState[],
 ): number | null {
   if (appliances.length !== CONFIRMED_APPLIANCE_IDS.length) return null;
+  if (appliances.some((appliance) => typeof appliance.isOn !== "boolean")) return null;
 
   const byId = new Map(
     appliances.map((appliance) => [appliance.id, appliance.isOn]),
