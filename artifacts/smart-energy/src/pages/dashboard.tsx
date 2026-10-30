@@ -158,7 +158,7 @@ export default function Dashboard() {
         />
         <MetricCard
           icon={Calendar}
-          label="This Month (So Far)"
+          label={summary?.demoMode ? "Demo Session Energy" : "This Month (So Far)"}
           value={monthEnergyText}
           trend={{
             value: monthChange,
@@ -167,7 +167,7 @@ export default function Dashboard() {
         />
         <MetricCard
           icon={IndianRupee}
-          label="Est. Monthly Bill"
+          label={summary?.demoMode ? "Demo Session Bill" : "Est. Monthly Bill"}
           value={estimatedBillText}
           trend={{
             value: billChange,
