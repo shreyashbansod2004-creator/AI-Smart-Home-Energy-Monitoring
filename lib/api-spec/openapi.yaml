@@ -354,6 +354,9 @@ components:
           type: number
         currentA:
           type: number
+        powerFactor:
+          type: number
+          description: Calculated power factor; 0.90 in Demo Mode
         frequency:
           type: number
         history:

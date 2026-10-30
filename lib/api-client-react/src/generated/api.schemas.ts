@@ -37,6 +37,7 @@ export interface LiveMetrics {
   powerW: number;
   voltageV: number;
   currentA: number;
+  powerFactor?: number;
   frequency: number;
   history: PowerHistoryPoint[];
   demoMode?: boolean;

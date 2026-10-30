@@ -41,7 +41,7 @@ export default function Dashboard() {
 
   const { data: energyData } = useGetEnergyConsumption({ period }, { query: { enabled: true, queryKey: getGetEnergyConsumptionQueryKey({ period }) } });
 
-  const { data: appliances } = useGetAppliances({
+  const { data: appliances, isError: appliancesError } = useGetAppliances({
     query: {
       queryKey: getGetAppliancesQueryKey(),
       refetchInterval: 3000,
@@ -73,7 +73,7 @@ export default function Dashboard() {
   };
 
   const activeAppliances = appliances?.filter((a) => a.isOn).slice(0, 3) || [];
-  const estimatedPowerW = summaryError || liveMetricsError
+  const estimatedPowerW = appliancesError
     ? null
     : estimatePowerFromConfirmedStates(appliances ?? []);
   const sensorReadingFresh = !liveMetricsError && isFreshSensorTimestamp(liveMetrics?.timestamp);
@@ -86,6 +86,10 @@ export default function Dashboard() {
     isValidVoltageV(liveMetrics?.voltageV) &&
     isValidCurrentA(liveMetrics?.currentA)
       ? liveMetrics.currentA.toFixed(2)
+      : '—';
+  const powerFactorText =
+    sensorReadingFresh && typeof liveMetrics?.powerFactor === 'number'
+      ? liveMetrics.powerFactor.toFixed(2)
       : '—';
 
   if (summaryLoading) {
@@ -110,9 +114,13 @@ export default function Dashboard() {
         {summary?.demoMode && (
           <Badge variant="outline" className="mt-2">DEMO MODE – SIMULATED READINGS</Badge>
         )}
-        {(summaryError || liveMetricsError) && (
+        {(summaryError || liveMetricsError || appliancesError) && (
           <p role="alert" className="text-sm text-destructive mt-2">
-            Live readings are unavailable. If Demo Mode is enabled, verify that all five confirmed appliance states are available.
+            {appliancesError
+              ? 'Appliance data is unavailable. Check the API connection and database appliance records.'
+              : summaryError
+                ? 'Dashboard summary is unavailable. Check the API and database connection.'
+                : 'Live electrical readings are unavailable. Check sensor data or the five confirmed appliance states required by Demo Mode.'}
           </p>
         )}
       </div>
@@ -179,7 +187,7 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Power Factor</p>
-              <p className="text-lg font-semibold text-foreground">—</p>
+              <p className="text-lg font-semibold text-foreground">{powerFactorText}</p>
             </div>
           </div>
         </div>

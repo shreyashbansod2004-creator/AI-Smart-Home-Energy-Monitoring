@@ -1,5 +1,6 @@
 import {
   estimatePowerFromConfirmedStates,
+  getCanonicalApplianceId,
   type ApplianceRelayState,
 } from "@workspace/api-zod";
 
@@ -62,9 +63,13 @@ export class DemoEnergyLedger {
 }
 
 export function getConfirmedApplianceStates(
-  rows: readonly { id: string; isOn: boolean }[],
+  rows: readonly { id: string; name?: string; isOn: boolean }[],
 ): ApplianceRelayState[] | null {
   if (rows.some((row) => typeof row.isOn !== "boolean")) return null;
-  const states = rows.map(({ id, isOn }) => ({ id, isOn }));
+  const states = rows.map(({ id, name, isOn }) => ({
+    id: getCanonicalApplianceId(id, name) ?? id,
+    name,
+    isOn,
+  }));
   return estimatePowerFromConfirmedStates(states) === null ? null : states;
 }

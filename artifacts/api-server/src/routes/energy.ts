@@ -12,6 +12,7 @@ import {
   GetEnergyConsumptionResponse,
   GetApplianceBreakdownResponse,
   GetEnergyAnalyticsResponse,
+  getAppliancePowerRatingW,
 } from "@workspace/api-zod";
 
 const router = Router();
@@ -169,10 +170,12 @@ router.get("/energy/appliance-breakdown", async (req, res): Promise<void> => {
 
     // Estimate each appliance's monthly contribution based on powerW and 8h/day average
     const COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#8b5cf6", "#06b6d4", "#f97316", "#6b7280", "#ec4899"];
-    const totalWh = appliances.reduce((sum, a) => sum + a.powerW * 8, 0) || 1;
+    const ratedPower = (appliance: typeof appliances[number]) =>
+      getAppliancePowerRatingW(appliance.id, appliance.powerW, appliance.name);
+    const totalWh = appliances.reduce((sum, appliance) => sum + ratedPower(appliance) * 8, 0) || 1;
 
     let breakdown = appliances.map((a, i) => {
-      const applianceWh = a.powerW * 8; // 8 hours average per day
+      const applianceWh = ratedPower(a) * 8; // 8 hours average per day
       const percentage = parseFloat(((applianceWh / totalWh) * 100).toFixed(1));
       const energyKwh = parseFloat(((applianceWh / 1000) * 30).toFixed(1)); // 30 days
       return { name: a.name, percentage, energyKwh, color: COLORS[i % COLORS.length] };

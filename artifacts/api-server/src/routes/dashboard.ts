@@ -46,10 +46,8 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
       return;
     }
 
-    const currentPowerW = demo
-      ? simulated!.powerW
-      : estimatePowerFromConfirmedStates(appliances) ?? 0;
     let sensorPowerW = 0;
+    let hasSensorReading = false;
     let voltageV = simulated?.voltageV ?? 0;
     let currentA = simulated?.currentA ?? 0;
 
@@ -62,9 +60,19 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
         .limit(1);
       if (latest) {
         sensorPowerW = Math.round(latest.powerWatts);
+        hasSensorReading = true;
         voltageV = latest.voltageV ?? 0;
         currentA = latest.currentA ?? 0;
       }
+    }
+
+    const estimatedAppliancePowerW = estimatePowerFromConfirmedStates(appliances);
+    const currentPowerW = demo
+      ? simulated!.powerW
+      : estimatedAppliancePowerW ?? (hasSensorReading ? sensorPowerW : null);
+    if (currentPowerW === null) {
+      res.status(503).json({ error: "APPLIANCE_STATES_UNAVAILABLE" });
+      return;
     }
 
     // ── Today's energy from dailyUsage ──────────────────────────────────────
@@ -207,11 +215,12 @@ router.get("/dashboard/live", async (req, res): Promise<void> => {
       res.status(503).json({ error: "APPLIANCE_STATES_UNAVAILABLE" });
       return;
     }
-    const powerW = demo
-      ? simulated!.powerW
-      : estimatePowerFromConfirmedStates(appliances) ?? 0;
+    const estimatedAppliancePowerW = estimatePowerFromConfirmedStates(appliances);
+    let powerW = demo ? simulated!.powerW : estimatedAppliancePowerW ?? 0;
     let voltageV = simulated?.voltageV ?? 0;
     let currentA = simulated?.currentA ?? 0;
+    let powerFactor = demo ? 0.9 : undefined;
+    let hasSensorReading = false;
     let timestamp = simulated?.sampledAt ?? now.toISOString();
 
     if (device) {
@@ -237,16 +246,29 @@ router.get("/dashboard/live", async (req, res): Promise<void> => {
         timestamp = latest.recordedAt.toISOString();
         voltageV = latest.voltageV ?? 0;
         currentA = latest.currentA ?? 0;
+        powerW = Math.round(latest.powerWatts);
+        hasSensorReading = true;
+        const apparentPower = voltageV * currentA;
+        if (apparentPower > 0) {
+          const calculatedPowerFactor = latest.powerWatts / apparentPower;
+          if (Number.isFinite(calculatedPowerFactor) && calculatedPowerFactor >= 0 && calculatedPowerFactor <= 1.1) {
+            powerFactor = calculatedPowerFactor;
+          }
+        }
       }
     }
 
-    // No readings: history stays empty and all metrics are 0 (device offline/not yet connected)
+    if (!demo && estimatedAppliancePowerW === null && !hasSensorReading) {
+      res.status(503).json({ error: "APPLIANCE_STATES_UNAVAILABLE" });
+      return;
+    }
 
     const metrics = GetLiveMetricsResponse.parse({
       timestamp,
       powerW,
       voltageV,
       currentA,
+      powerFactor,
       frequency: 50,
       history,
       demoMode: demo,
