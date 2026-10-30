@@ -18,7 +18,13 @@ export function isDemoModeEnabled(value: string | undefined): boolean {
   return value === "true";
 }
 
-export interface DemoEnergyHistoryPoint {\n  label: string;\n  energyKwh: number;\n  date: string;\n}\n\nexport interface SimulatedElectricalReadings {
+export interface DemoEnergyHistoryPoint {
+  label: string;
+  energyKwh: number;
+  date: string;
+}
+
+export interface SimulatedElectricalReadings {
   powerW: number;
   voltageV: number;
   currentA: number;
@@ -34,7 +40,8 @@ export interface DemoEnergyHistoryPoint {\n  label: string;\n  energyKwh: number
 export class DemoEnergyLedger {
   private previousPowerW: number | null = null;
   private previousAtMs: number | null = null;
-  private energyWh = 0;\n  private history: DemoEnergyHistoryPoint[] = [];
+  private energyWh = 0;
+  private history: DemoEnergyHistoryPoint[] = [];
 
   sample(
     appliances: readonly ApplianceRelayState[],
@@ -58,6 +65,13 @@ export class DemoEnergyLedger {
     this.previousAtMs = nowMs;
 
     const voltageV = getDemoVoltageV(nowMs);
+    const sampledAt = new Date(nowMs);
+    this.history.push({
+      label: sampledAt.toISOString().slice(11, 19),
+      energyKwh: this.energyWh / 1_000,
+      date: sampledAt.toISOString().slice(0, 10),
+    });
+    if (this.history.length > 120) this.history.shift();
 
     return {
       powerW,
@@ -71,9 +85,16 @@ export class DemoEnergyLedger {
   getEnergyKwh(): number {
     return this.energyWh / 1_000;
   }
+
+  getHistory(): DemoEnergyHistoryPoint[] {
+    return this.history.map((point) => ({ ...point }));
+  }
 }
 
-export const demoEnergyLedger = new DemoEnergyLedger();\n\nexport function getConfirmedApplianceStates(
+/** Shared only by API routes in this backend process; never persisted. */
+export const demoEnergyLedger = new DemoEnergyLedger();
+
+export function getConfirmedApplianceStates(
   rows: readonly { id: string; name?: string; isOn: boolean }[],
 ): ApplianceRelayState[] | null {
   if (rows.some((row) => typeof row.isOn !== "boolean")) return null;
