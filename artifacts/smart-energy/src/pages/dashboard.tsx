@@ -24,6 +24,10 @@ import { ApplianceCard } from '@/components/appliances/appliance-card';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from 'wouter';
 
+function isFiniteMetric(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value);
+}
+
 export default function Dashboard() {
   const queryClient = useQueryClient();
   const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
@@ -73,6 +77,15 @@ export default function Dashboard() {
   };
 
   const activeAppliances = appliances?.filter((a) => a.isOn).slice(0, 3) || [];
+  const energyChartData = Array.isArray(energyData)
+    ? energyData.filter((point) => point && typeof point.label === 'string' && isFiniteMetric(point.energyKwh))
+    : [];
+  const todayEnergyText = isFiniteMetric(summary?.todayEnergyKwh) ? `${summary.todayEnergyKwh.toFixed(2)} kWh` : '—';
+  const monthEnergyText = isFiniteMetric(summary?.monthEnergyKwh) ? `${summary.monthEnergyKwh.toFixed(1)} kWh` : '—';
+  const estimatedBillText = isFiniteMetric(summary?.estimatedBillInr) ? `₹${summary.estimatedBillInr.toLocaleString('en-IN')}` : '—';
+  const todayChange = isFiniteMetric(summary?.todayChangePercent) ? summary.todayChangePercent : 0;
+  const monthChange = isFiniteMetric(summary?.monthChangePercent) ? summary.monthChangePercent : 0;
+  const billChange = isFiniteMetric(summary?.billChangePercent) ? summary.billChangePercent : 0;
   const estimatedPowerW = appliancesError
     ? null
     : estimatePowerFromConfirmedStates(appliances ?? []);
@@ -88,7 +101,7 @@ export default function Dashboard() {
       ? liveMetrics.currentA.toFixed(2)
       : '—';
   const powerFactorText =
-    sensorReadingFresh && typeof liveMetrics?.powerFactor === 'number'
+    sensorReadingFresh && isFiniteMetric(liveMetrics?.powerFactor)
       ? liveMetrics.powerFactor.toFixed(2)
       : '—';
 
@@ -137,28 +150,28 @@ export default function Dashboard() {
         <MetricCard
           icon={Activity}
           label={summary?.demoMode ? 'Demo Session Energy' : "Today's Energy"}
-          value={summary ? `${summary.todayEnergyKwh.toFixed(2)} kWh` : '—'}
+          value={todayEnergyText}
           trend={{
-            value: summary?.todayChangePercent || 0,
-            isPositive: (summary?.todayChangePercent || 0) >= 0,
+            value: todayChange,
+            isPositive: todayChange >= 0,
           }}
         />
         <MetricCard
           icon={Calendar}
           label="This Month (So Far)"
-          value={summary ? `${summary.monthEnergyKwh.toFixed(1)} kWh` : '—'}
+          value={monthEnergyText}
           trend={{
-            value: summary?.monthChangePercent || 0,
-            isPositive: (summary?.monthChangePercent || 0) >= 0,
+            value: monthChange,
+            isPositive: monthChange >= 0,
           }}
         />
         <MetricCard
           icon={IndianRupee}
           label="Est. Monthly Bill"
-          value={summary ? `₹${summary.estimatedBillInr.toLocaleString()}` : '—'}
+          value={estimatedBillText}
           trend={{
-            value: summary?.billChangePercent || 0,
-            isPositive: (summary?.billChangePercent || 0) <= 0,
+            value: billChange,
+            isPositive: billChange <= 0,
           }}
         />
       </div>
@@ -210,7 +223,7 @@ export default function Dashboard() {
             </div>
           </div>
           <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={energyData || []}>
+            <LineChart data={energyChartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} />
               <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
