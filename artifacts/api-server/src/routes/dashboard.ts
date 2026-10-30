@@ -15,12 +15,11 @@ import {
   calculateEnergyBillInr,
 } from "@workspace/api-zod";
 import {
-  DemoEnergyLedger,
+  demoEnergyLedger,
   getConfirmedApplianceStates,
   isDemoModeEnabled,
 } from "../lib/demo-mode";
 
-const demoLedger = new DemoEnergyLedger();
 const demoModeEnabled = () => isDemoModeEnabled(process.env.DEMO_MODE);
 
 const router = Router();
@@ -40,7 +39,7 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
     const demo = demoModeEnabled();
     const confirmedStates = getConfirmedApplianceStates(appliances);
     const simulated = demo && confirmedStates
-      ? demoLedger.sample(confirmedStates)
+      ? demoEnergyLedger.sample(confirmedStates)
       : null;
     if (demo && !simulated) {
       res.status(503).json({ error: "APPLIANCE_STATES_UNAVAILABLE" });
