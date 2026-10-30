@@ -12,6 +12,7 @@ import {
   GetDashboardSummaryResponse,
   GetLiveMetricsResponse,
   estimatePowerFromConfirmedStates,
+  calculateEnergyBillInr,
 } from "@workspace/api-zod";
 import {
   DemoEnergyLedger,
@@ -139,7 +140,7 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
       : 8.5;
     const budget = settings?.monthlyBudgetInr ?? 1500;
 
-    const estimatedBillInr = parseFloat((monthEnergyKwh * tariff).toFixed(0));
+    const estimatedBillInr = calculateEnergyBillInr(monthEnergyKwh, tariff) ?? 0;
 
     // ── Percentage changes ───────────────────────────────────────────────────
     const monthChangePercent =
