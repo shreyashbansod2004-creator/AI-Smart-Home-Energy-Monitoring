@@ -94,8 +94,7 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
 
     // ── Month energy: sum of dailyUsage rows for current month ──────────────
     const firstOfMonth = `${todayStr.slice(0, 7)}-01`;
-    // Monthly totals and bills remain based on persisted real readings only.
-    // Simulated energy is session-scoped and is never written into history.
+    // Demo totals are session-scoped and never read from or written to history.
     let monthEnergyKwh = demo ? simulated!.energyKwh : 0;
     let prevMonthEnergyKwh = 0;
 
@@ -226,7 +225,7 @@ router.get("/dashboard/live", async (req, res): Promise<void> => {
     let hasSensorReading = false;
     let timestamp = simulated?.sampledAt ?? now.toISOString();
 
-    if (device) {
+    if (device && !demo) {
       const rows = await db
         .select()
         .from(readingsTable)
