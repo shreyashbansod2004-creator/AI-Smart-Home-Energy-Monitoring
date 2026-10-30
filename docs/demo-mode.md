@@ -24,11 +24,12 @@ The simulation reads the five appliance rows from the database. Those rows repre
 | Study Room Light | 2.5 W |
 | Mini Fan | 5.5 W |
 
-- Nominal voltage: 230 V
+- Voltage: small deterministic fluctuations around 230 V, constrained to the 220–240 V range
 - Assumed power factor: 0.90
 - Active power: sum of the rated power of appliances whose confirmed state is ON
-- Current: \`powerW / (230 × 0.90)\`
+- Current: `powerW / (voltageV × 0.90)` (zero when all appliances are OFF)
 - Energy: elapsed-time integration of the previous sampled power, converted from Wh to kWh
+- Demo bill estimate: session energy in kWh multiplied by the configured tariff in ₹/kWh; it never uses or writes production usage history
 
 With all five appliances ON, simulated power is 15.5 W and current is approximately 0.075 A. With all appliances OFF, both are zero.
 
@@ -37,7 +38,7 @@ With all five appliances ON, simulated power is 15.5 W and current is approximat
 - The API requires exactly one valid boolean state for each of the five known appliance IDs. Missing, duplicate, extra, or invalid states cause HTTP 503 with \`APPLIANCE_STATES_UNAVAILABLE\` in Demo Mode. The dashboard must show unavailable values rather than substituting zero or stale readings.
 - Invalid snapshots do not advance the energy ledger.
 - Energy integration uses only short observed intervals (up to five seconds); longer gaps are skipped to avoid inventing consumption while the API was not observing the device.
-- The demo energy ledger is in memory and resets when the backend restarts. It is session energy, not a persisted daily/monthly meter.
+- The demo energy ledger is in memory and resets when the backend restarts. In Demo Mode the Dashboard's energy and bill estimates use this session ledger, not persisted daily/monthly production totals.
 - Simulated readings are returned by the dashboard summary/live endpoints only. They are not inserted into the sensor \`readings\` table or \`daily_usage\` table.
 - Day/week/month/year charts and ML predictions continue to use persisted history only. Demo energy is not fed into model training or prediction inputs.
 - Relay command dispatch, acknowledgements, active-LOW firmware logic, device authentication, and real sensor ingestion remain unchanged.
