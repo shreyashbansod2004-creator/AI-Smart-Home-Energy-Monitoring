@@ -96,10 +96,10 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
     const firstOfMonth = `${todayStr.slice(0, 7)}-01`;
     // Monthly totals and bills remain based on persisted real readings only.
     // Simulated energy is session-scoped and is never written into history.
-    let monthEnergyKwh = 0;
+    let monthEnergyKwh = demo ? simulated!.energyKwh : 0;
     let prevMonthEnergyKwh = 0;
 
-    if (device) {
+    if (device && !demo) {
       const [monthSum] = await db
         .select({ total: sql<number>`COALESCE(SUM(energy_kwh), 0)` })
         .from(dailyUsageTable)
@@ -134,7 +134,10 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
 
     // ── Tariff rate from settings ────────────────────────────────────────────
     const [settings] = await db.select().from(settingsTable).limit(1);
-    const tariff = settings?.tariffRatePerKwh ?? 8.5;
+    const configuredTariff = Number(settings?.tariffRatePerKwh);
+    const tariff = Number.isFinite(configuredTariff) && configuredTariff >= 0
+      ? configuredTariff
+      : 8.5;
     const budget = settings?.monthlyBudgetInr ?? 1500;
 
     const estimatedBillInr = parseFloat((monthEnergyKwh * tariff).toFixed(0));
