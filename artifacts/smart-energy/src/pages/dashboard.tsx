@@ -76,7 +76,10 @@ export default function Dashboard() {
     });
   };
 
-  const activeAppliances = appliances?.filter((a) => a.isOn).slice(0, 3) || [];
+  const validAppliances = Array.isArray(appliances)
+    ? appliances.filter((appliance) => appliance && typeof appliance.id === 'string' && typeof appliance.isOn === 'boolean')
+    : [];
+  const activeAppliances = validAppliances.filter((appliance) => appliance.isOn).slice(0, 3);
   const energyChartData = Array.isArray(energyData)
     ? energyData.filter((point) => point && typeof point.label === 'string' && isFiniteMetric(point.energyKwh))
     : [];
@@ -88,7 +91,7 @@ export default function Dashboard() {
   const billChange = isFiniteMetric(summary?.billChangePercent) ? summary.billChangePercent : 0;
   const estimatedPowerW = appliancesError
     ? null
-    : estimatePowerFromConfirmedStates(appliances ?? []);
+    : estimatePowerFromConfirmedStates(validAppliances);
   const sensorReadingFresh = !liveMetricsError && isFreshSensorTimestamp(liveMetrics?.timestamp);
   const voltageText =
     sensorReadingFresh && isValidVoltageV(liveMetrics?.voltageV)
