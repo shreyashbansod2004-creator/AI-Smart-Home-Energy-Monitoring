@@ -12,17 +12,9 @@ import {
   GetDashboardSummaryResponse,
   GetLiveMetricsResponse,
   estimatePowerFromConfirmedStates,
-  simulateElectricalReadings,
-  estimateBillInr,
 } from "@workspace/api-zod";
-import { DEMO_MODE_ENABLED, sampleDemoEnergy, toEnergyKwh } from "../lib/demo-mode";
 
 const router = Router();
-
-// Same source and fallback as the existing summary path: settings.tariffRatePerKwh, else 8.5.
-function settingsTariff(settings: { tariffRatePerKwh: number } | undefined): number {
-  return settings?.tariffRatePerKwh ?? 8.5;
-}
 
 async function getDefaultDevice() {
   const [device] = await db.select().from(devicesTable).limit(1);
@@ -31,44 +23,6 @@ async function getDefaultDevice() {
 
 router.get("/dashboard/summary", async (req, res): Promise<void> => {
   try {
-    // DEMO MODE — SIMULATED READINGS. Everything below is calculated from the
-    // acknowledged appliance states. No sensor reading, daily_usage row or
-    // history is read, so faulty ESP32 data cannot reach these values.
-    if (DEMO_MODE_ENABLED) {
-      const demoAppliances = await db.select().from(appliancesTable);
-      const sim = simulateElectricalReadings(
-        estimatePowerFromConfirmedStates(demoAppliances),
-      ) ?? simulateElectricalReadings(0)!;
-      const { todayKwh, monthKwh } = toEnergyKwh(await sampleDemoEnergy());
-
-      // Existing tariff from settings, same fallback as the non-demo path.
-      const [demoSettings] = await db.select().from(settingsTable).limit(1);
-      const demoTariff = settingsTariff(demoSettings);
-
-      res.json(
-        GetDashboardSummaryResponse.parse({
-          currentPowerW: sim.currentPowerW,
-          todayEnergyKwh: parseFloat(todayKwh.toFixed(6)),
-          monthEnergyKwh: parseFloat(monthKwh.toFixed(6)),
-          estimatedBillInr: parseFloat(estimateBillInr(monthKwh, demoTariff).toFixed(4)),
-          voltageV: sim.voltageV,
-          currentA: sim.currentA,
-          powerFactorKw: parseFloat((sim.currentPowerW / 1000).toFixed(4)),
-          // No simulated history exists to compare against.
-          todayChangePercent: 0,
-          monthChangePercent: 0,
-          billChangePercent: 0,
-          systemStatus: "online",
-          lastUpdated: new Date().toISOString(),
-          activeApplianceCount: demoAppliances.filter((a) => a.isOn).length,
-          totalApplianceCount: demoAppliances.length,
-          demoMode: true,
-          powerFactor: sim.powerFactor,
-        }),
-      );
-      return;
-    }
-
     const device = await getDefaultDevice();
     const appliances = await db.select().from(appliancesTable);
 
@@ -216,26 +170,6 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
 
 router.get("/dashboard/live", async (req, res): Promise<void> => {
   try {
-    // DEMO MODE — SIMULATED READINGS: no sensor rows are read and the sensor
-    // history is deliberately not mixed into the simulated live values.
-    if (DEMO_MODE_ENABLED) {
-      const demoAppliances = await db.select().from(appliancesTable);
-      const sim = simulateElectricalReadings(
-        estimatePowerFromConfirmedStates(demoAppliances),
-      ) ?? simulateElectricalReadings(0)!;
-      res.json(
-        GetLiveMetricsResponse.parse({
-          timestamp: new Date().toISOString(),
-          powerW: sim.currentPowerW,
-          voltageV: sim.voltageV,
-          currentA: sim.currentA,
-          frequency: 50,
-          history: [],
-        }),
-      );
-      return;
-    }
-
     const device = await getDefaultDevice();
     const now = new Date();
     const appliances = await db.select().from(appliancesTable);

@@ -20,15 +20,15 @@ export const DEMO_POWER_FACTOR = 0.9;
 export const DEMO_MODE_LABEL = "DEMO MODE — SIMULATED READINGS";
 
 /**
- * Demo mode is ON unless DEMO_MODE is explicitly set to a false-like value,
- * so the presentation build works with no extra configuration. Set
- * DEMO_MODE=false to restore hardware-sensor behaviour.
+ * Demo mode is OPT-IN: it is enabled only when DEMO_MODE is explicitly set to a
+ * true-like value. In demo mode the appliance buttons stop controlling real
+ * relays, so it must never switch on by accident (for example in production).
+ *
+ * Keep in sync with the same check in lib/db/src/index.ts.
  */
 export function parseDemoModeFlag(value: string | undefined | null): boolean {
-  if (value === undefined || value === null) return true;
-  return !["false", "0", "off", "no", "disabled"].includes(
-    value.trim().toLowerCase(),
-  );
+  if (value === undefined || value === null) return false;
+  return ["true", "1", "on", "yes"].includes(value.trim().toLowerCase());
 }
 
 export interface SimulatedElectricalReadings {
@@ -153,4 +153,56 @@ export function estimateBillInr(
   tariffPerKwh: number,
 ): number {
   return energyKwh * tariffPerKwh;
+}
+
+// ─── In-memory demo appliances ───────────────────────────────────────────────
+
+export interface DemoApplianceDefinition {
+  id: string;
+  name: string;
+  location: string;
+  iconType: string;
+}
+
+/**
+ * The five demo appliances, in the same order as the project's relay seed.
+ * The ids must be exactly the ids in APPLIANCE_POWER_RATINGS_W (a test enforces
+ * this); wattage is never defined here.
+ */
+export const DEMO_APPLIANCES: readonly DemoApplianceDefinition[] = [
+  { id: "light-living", name: "Living Room Light", location: "Living Room", iconType: "light" },
+  { id: "light-bedroom", name: "Bedroom Light", location: "Bedroom", iconType: "light" },
+  { id: "light-kitchen", name: "Kitchen Light", location: "Kitchen", iconType: "light" },
+  { id: "light-study", name: "Sitting Area/Study Room Light", location: "Study Room", iconType: "light" },
+  { id: "fan-living", name: "Mini Fan", location: "Living Room", iconType: "fan" },
+];
+
+export type DemoApplianceStates = Readonly<Record<string, boolean>>;
+
+/** Everything OFF. */
+export function createDemoApplianceStates(): DemoApplianceStates {
+  return Object.fromEntries(DEMO_APPLIANCES.map((a) => [a.id, false]));
+}
+
+/** Returns a new state map, or null for an unknown appliance id. */
+export function setDemoApplianceState(
+  states: DemoApplianceStates,
+  id: string,
+  isOn: boolean,
+): DemoApplianceStates | null {
+  if (!Object.prototype.hasOwnProperty.call(states, id)) return null;
+  return { ...states, [id]: isOn };
+}
+
+export function turnAllDemoAppliancesOff(
+  states: DemoApplianceStates,
+): DemoApplianceStates {
+  return Object.fromEntries(Object.keys(states).map((id) => [id, false]));
+}
+
+/** The complete {id, isOn} set, in catalog order (what the power estimate expects). */
+export function demoStatesToList(
+  states: DemoApplianceStates,
+): { id: string; isOn: boolean }[] {
+  return DEMO_APPLIANCES.map((a) => ({ id: a.id, isOn: states[a.id] === true }));
 }

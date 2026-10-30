@@ -9,8 +9,17 @@ import settingsRouter from "./settings";
 import readingsRouter from "./readings";
 import commandsRouter from "./commands";
 import mlRouter from "./ml";
+import demoRouter from "./demo";
+import { DEMO_MODE_ENABLED } from "../lib/demo-mode";
 
 const router: IRouter = Router();
+
+// DEMO_MODE=true: the in-memory demo router answers first. Its routes never touch
+// the database, the commands table or the ESP32. Without DEMO_MODE it is not mounted
+// at all, so the real hardware routes below are unchanged.
+if (DEMO_MODE_ENABLED) {
+  router.use(demoRouter);
+}
 
 router.use(healthRouter);
 router.use(dashboardRouter);
