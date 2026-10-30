@@ -38,6 +38,17 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      - name: Refresh lockfile metadata for the pinned pnpm version
+        run: pnpm install --lockfile-only --no-frozen-lockfile --network-concurrency=1 --child-concurrency=1 --reporter=append-only
+
+      - name: Upload regenerated pnpm lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: pnpm-lockfile-pnpm-12.16.1
+          path: pnpm-lock.yaml
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Install locked workspace dependencies
         run: pnpm install --frozen-lockfile --network-concurrency=1 --child-concurrency=1 --reporter=append-only
 
