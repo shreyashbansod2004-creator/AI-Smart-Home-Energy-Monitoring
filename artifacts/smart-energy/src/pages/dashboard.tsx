@@ -23,10 +23,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { ApplianceCard } from '@/components/appliances/appliance-card';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from 'wouter';
-
-function isFiniteMetric(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value);
-}
+import { filterEnergyChartData, formatCurrencyInr, formatEnergyKwh, isFiniteMetric, safePercentage } from '@/lib/dashboard-metrics';
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
@@ -80,15 +77,13 @@ export default function Dashboard() {
     ? appliances.filter((appliance) => appliance && typeof appliance.id === 'string' && typeof appliance.isOn === 'boolean')
     : [];
   const activeAppliances = validAppliances.filter((appliance) => appliance.isOn).slice(0, 3);
-  const energyChartData = Array.isArray(energyData)
-    ? energyData.filter((point) => point && typeof point.label === 'string' && isFiniteMetric(point.energyKwh))
-    : [];
-  const todayEnergyText = isFiniteMetric(summary?.todayEnergyKwh) ? `${summary.todayEnergyKwh.toFixed(2)} kWh` : '—';
-  const monthEnergyText = isFiniteMetric(summary?.monthEnergyKwh) ? `${summary.monthEnergyKwh.toFixed(1)} kWh` : '—';
-  const estimatedBillText = isFiniteMetric(summary?.estimatedBillInr) ? `₹${summary.estimatedBillInr.toLocaleString('en-IN')}` : '—';
-  const todayChange = isFiniteMetric(summary?.todayChangePercent) ? summary.todayChangePercent : 0;
-  const monthChange = isFiniteMetric(summary?.monthChangePercent) ? summary.monthChangePercent : 0;
-  const billChange = isFiniteMetric(summary?.billChangePercent) ? summary.billChangePercent : 0;
+  const energyChartData = filterEnergyChartData(energyData);
+  const todayEnergyText = formatEnergyKwh(summary?.todayEnergyKwh, 2);
+  const monthEnergyText = formatEnergyKwh(summary?.monthEnergyKwh, 1);
+  const estimatedBillText = formatCurrencyInr(summary?.estimatedBillInr);
+  const todayChange = safePercentage(summary?.todayChangePercent);
+  const monthChange = safePercentage(summary?.monthChangePercent);
+  const billChange = safePercentage(summary?.billChangePercent);
   const estimatedPowerW = appliancesError
     ? null
     : estimatePowerFromConfirmedStates(validAppliances);
