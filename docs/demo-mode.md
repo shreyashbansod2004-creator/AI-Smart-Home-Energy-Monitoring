@@ -40,7 +40,7 @@ With all five appliances ON, simulated power is 15.5 W and current is approximat
 - Energy integration uses only short observed intervals (up to five seconds); longer gaps are skipped to avoid inventing consumption while the API was not observing the device.
 - The demo energy ledger is in memory and resets when the backend restarts. In Demo Mode the Dashboard's energy and bill estimates use this session ledger, not persisted daily/monthly production totals.
 - Simulated readings are returned by the dashboard summary/live endpoints only. They are not inserted into the sensor \`readings\` table or \`daily_usage\` table.
-- Day/week/month/year charts and ML predictions continue to use persisted history only. Demo energy is not fed into model training or prediction inputs.
+- The Dashboard energy chart returns bounded samples from the same in-memory session ledger while Demo Mode is enabled; it does not query persisted readings or daily usage. The analytics pages and ML predictions continue to use persisted history only, and Demo energy is not fed into model training or prediction inputs.
 - Relay command dispatch, acknowledgements, active-LOW firmware logic, device authentication, and real sensor ingestion remain unchanged.
 
 The dashboard labels simulated readings explicitly. Do not describe simulated voltage/current/power as physical sensor measurements during the presentation.
