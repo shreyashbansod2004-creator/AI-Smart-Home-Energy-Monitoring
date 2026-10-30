@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { demoEnergyLedger, getConfirmedApplianceStates, isDemoModeEnabled } from "../lib/demo-mode";
 import { desc, eq, gte, and, sql } from "drizzle-orm";
 import {
   db,
@@ -30,8 +31,22 @@ router.get("/energy/consumption", async (req, res): Promise<void> => {
   try {
     const query = GetEnergyConsumptionQueryParams.safeParse(req.query);
     const period = query.success ? (query.data.period ?? "month") : "month";
-    const device = await getDefaultDevice();
     const now = new Date();
+
+    if (isDemoModeEnabled(process.env.DEMO_MODE)) {
+      const appliances = await db.select().from(appliancesTable);
+      const confirmedStates = getConfirmedApplianceStates(appliances);
+      const simulated = confirmedStates ? demoEnergyLedger.sample(confirmedStates) : null;
+      if (!simulated) {
+        res.status(503).json({ error: "APPLIANCE_STATES_UNAVAILABLE" });
+        return;
+      }
+      // Demo charts use only the in-memory session ledger, never persisted real history.
+      res.json(GetEnergyConsumptionResponse.parse(demoEnergyLedger.getHistory()));
+      return;
+    }
+
+    const device = await getDefaultDevice();
 
     let data: { label: string; energyKwh: number; date: string }[] = [];
 
