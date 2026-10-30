@@ -122,16 +122,13 @@ export default function Dashboard() {
       <div>
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">Welcome back, monitor your energy usage</p>
-        {summary?.demoMode && (
-          <Badge variant="outline" className="mt-2">DEMO MODE – SIMULATED READINGS</Badge>
-        )}
         {(summaryError || liveMetricsError || appliancesError) && (
           <p role="alert" className="text-sm text-destructive mt-2">
             {appliancesError
               ? 'Appliance data is unavailable. Check the API connection and database appliance records.'
               : summaryError
                 ? 'Dashboard summary is unavailable. Check the API and database connection.'
-                : 'Live electrical readings are unavailable. Check sensor data or the five confirmed appliance states required by Demo Mode.'}
+                : 'Live electrical readings are unavailable. Check sensor data or the five confirmed appliance states required for energy estimates.'}
           </p>
         )}
       </div>
@@ -147,7 +144,7 @@ export default function Dashboard() {
         />
         <MetricCard
           icon={Activity}
-          label={summary?.demoMode ? 'Demo Session Energy' : "Today's Energy"}
+          label="Today's Energy"
           value={todayEnergyText}
           trend={{
             value: todayChange,
@@ -156,7 +153,7 @@ export default function Dashboard() {
         />
         <MetricCard
           icon={Calendar}
-          label={summary?.demoMode ? "Demo Session Energy" : "This Month (So Far)"}
+          label="This Month (So Far)"
           value={monthEnergyText}
           trend={{
             value: monthChange,
@@ -165,7 +162,7 @@ export default function Dashboard() {
         />
         <MetricCard
           icon={IndianRupee}
-          label={summary?.demoMode ? "Demo Session Bill" : "Est. Monthly Bill"}
+          label="Est. Monthly Bill"
           value={estimatedBillText}
           trend={{
             value: billChange,
@@ -206,7 +203,7 @@ export default function Dashboard() {
         {/* Energy Chart */}
         <div className="lg:col-span-2 bg-card border border-card-border rounded-xl p-6 shadow-md">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-foreground">{summary?.demoMode ? "Demo Session Energy (kWh)" : "Energy Consumption (kWh)"}</h2>
+            <h2 className="text-lg font-semibold text-foreground">Energy Consumption (kWh)</h2>
             <div className="flex gap-2">
               {(['day', 'week', 'month', 'year'] as const).map((p) => (
                 <Button
