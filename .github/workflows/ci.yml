@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - fix/demo-mode-dashboard-hardening
+      - fix/render-pnpm-build-approval
   pull_request:
     branches:
       - main
@@ -24,11 +25,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 12.16.1
           run_install: false
 
       - name: Setup Node.js
@@ -36,6 +39,7 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+
 
       - name: Install locked workspace dependencies
         run: pnpm install --frozen-lockfile --network-concurrency=1 --child-concurrency=1 --reporter=append-only

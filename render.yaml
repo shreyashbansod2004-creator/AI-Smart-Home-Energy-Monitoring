@@ -7,7 +7,7 @@ services:
 
     # Render clones the repo root; build and start from there
     rootDir: .
-    buildCommand: "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build"
+    buildCommand: "npm install -g pnpm@12.16.1 && pnpm install --frozen-lockfile && pnpm --filter @workspace/api-server run build"
     startCommand: "pnpm --filter @workspace/api-server run start"
 
     envVars:
