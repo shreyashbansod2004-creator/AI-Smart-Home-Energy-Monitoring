@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -25,6 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -41,13 +43,17 @@ jobs:
       - name: Refresh lockfile metadata for the pinned pnpm version
         run: pnpm install --lockfile-only --no-frozen-lockfile --network-concurrency=1 --child-concurrency=1 --reporter=append-only
 
-      - name: Upload regenerated pnpm lockfile
-        uses: actions/upload-artifact@v4
-        with:
-          name: pnpm-lockfile-pnpm-12.16.1
-          path: pnpm-lock.yaml
-          if-no-files-found: error
-          retention-days: 1
+      - name: Commit pnpm 12 lockfile metadata when it changes
+        run: |
+          if git diff --quiet -- pnpm-lock.yaml; then
+            echo "pnpm-lock.yaml already matches pnpm 12.16.1"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "chore: refresh pnpm 12 lockfile metadata"
+          git push origin "HEAD:${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
 
       - name: Install locked workspace dependencies
         run: pnpm install --frozen-lockfile --network-concurrency=1 --child-concurrency=1 --reporter=append-only
