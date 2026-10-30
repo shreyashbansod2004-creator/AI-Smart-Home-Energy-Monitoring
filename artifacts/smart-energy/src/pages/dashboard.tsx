@@ -17,7 +17,13 @@ import {
   useTurnAllOff,
   useToggleAppliance,
 } from '@workspace/api-client-react';
-import { estimatePowerFromConfirmedStates } from '@workspace/api-zod';
+import {
+  estimatePowerFromConfirmedStates,
+  simulateElectricalReadings,
+  formatSimulatedCurrentA,
+  DEMO_MODE_LABEL,
+  DEMO_NOMINAL_VOLTAGE_V,
+} from '@workspace/api-zod';
 import { isFreshSensorTimestamp, isValidCurrentA, isValidVoltageV } from '@/lib/sensor-readings';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { ApplianceCard } from '@/components/appliances/appliance-card';
@@ -75,16 +81,28 @@ export default function Dashboard() {
   const activeAppliances = appliances?.filter((a) => a.isOn).slice(0, 3) || [];
   const estimatedPowerW = estimatePowerFromConfirmedStates(appliances ?? []);
   const sensorReadingFresh = isFreshSensorTimestamp(liveMetrics?.timestamp);
-  const voltageText =
-    sensorReadingFresh && isValidVoltageV(liveMetrics?.voltageV)
+
+  // DEMO MODE — SIMULATED READINGS. The backend decides the mode. In demo mode the
+  // electrical values are derived from the same appliance states as the power
+  // card (230 V, PF 0.9); ESP32 sensor values are not read at all.
+  const demoMode = summary?.demoMode === true;
+  const simulated = demoMode ? simulateElectricalReadings(estimatedPowerW) : null;
+
+  const voltageText = demoMode
+    ? String(DEMO_NOMINAL_VOLTAGE_V)
+    : sensorReadingFresh && isValidVoltageV(liveMetrics?.voltageV)
       ? liveMetrics.voltageV.toFixed(1)
       : '—';
-  const currentText =
-    sensorReadingFresh &&
-    isValidVoltageV(liveMetrics?.voltageV) &&
-    isValidCurrentA(liveMetrics?.currentA)
+  const currentText = demoMode
+    ? simulated
+      ? formatSimulatedCurrentA(simulated.currentA)
+      : '—'
+    : sensorReadingFresh &&
+        isValidVoltageV(liveMetrics?.voltageV) &&
+        isValidCurrentA(liveMetrics?.currentA)
       ? liveMetrics.currentA.toFixed(2)
       : '—';
+  const powerFactorText = demoMode && simulated ? String(simulated.powerFactor) : '—';
 
   if (summaryLoading) {
     return (
@@ -111,37 +129,63 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
           icon={Zap}
-          label="Estimated Power"
+          label={demoMode ? 'Current Power' : 'Estimated Power'}
           value={estimatedPowerW === null ? '—' : `${estimatedPowerW} W`}
-          subtitle="Estimated from acknowledged relay states"
-          badge={estimatedPowerW === null ? 'Unavailable' : 'Estimate'}
+          subtitle={
+            demoMode
+              ? 'Simulated from appliance ON/OFF states'
+              : 'Estimated from acknowledged relay states'
+          }
+          badge={estimatedPowerW === null ? 'Unavailable' : demoMode ? 'Simulated' : 'Estimate'}
         />
         <MetricCard
           icon={Activity}
           label="Today's Energy"
-          value={`${summary?.todayEnergyKwh.toFixed(2) || 0} kWh`}
-          trend={{
-            value: summary?.todayChangePercent || 0,
-            isPositive: (summary?.todayChangePercent || 0) >= 0,
-          }}
+          value={`${summary?.todayEnergyKwh.toFixed(demoMode ? 5 : 2) || 0} kWh`}
+          subtitle={demoMode ? 'Simulated energy consumption' : undefined}
+          badge={demoMode ? 'Simulated' : undefined}
+          trend={
+            demoMode
+              ? undefined
+              : {
+                  value: summary?.todayChangePercent || 0,
+                  isPositive: (summary?.todayChangePercent || 0) >= 0,
+                }
+          }
         />
         <MetricCard
           icon={Calendar}
           label="This Month (So Far)"
-          value={`${summary?.monthEnergyKwh.toFixed(1) || 0} kWh`}
-          trend={{
-            value: summary?.monthChangePercent || 0,
-            isPositive: (summary?.monthChangePercent || 0) >= 0,
-          }}
+          value={`${summary?.monthEnergyKwh.toFixed(demoMode ? 5 : 1) || 0} kWh`}
+          subtitle={demoMode ? 'Simulated; restarts at 0 with the server' : undefined}
+          badge={demoMode ? 'Simulated' : undefined}
+          trend={
+            demoMode
+              ? undefined
+              : {
+                  value: summary?.monthChangePercent || 0,
+                  isPositive: (summary?.monthChangePercent || 0) >= 0,
+                }
+          }
         />
         <MetricCard
           icon={IndianRupee}
           label="Est. Monthly Bill"
-          value={`₹${summary?.estimatedBillInr.toLocaleString() || 0}`}
-          trend={{
-            value: summary?.billChangePercent || 0,
-            isPositive: (summary?.billChangePercent || 0) <= 0,
-          }}
+          value={
+            demoMode
+              ? `₹${(summary?.estimatedBillInr ?? 0).toFixed(4)}`
+              : `₹${summary?.estimatedBillInr.toLocaleString() || 0}`
+          }
+          subtitle={demoMode ? 'Estimate based on simulated energy' : undefined}
+          badge={demoMode ? 'Simulated' : undefined}
+          trend={
+            demoMode
+              ? undefined
+              : {
+                  value: summary?.billChangePercent || 0,
+                  isPositive: (summary?.billChangePercent || 0) <= 0,
+                }
+          }
         />
       </div>
 
@@ -150,9 +194,14 @@ export default function Dashboard() {
         {/* Power Gauge */}
         <div className="bg-card border border-card-border rounded-xl p-6 shadow-md">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground">Current Usage Overview</h2>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Current Usage Overview</h2>
+              {demoMode && (
+                <p className="text-xs font-semibold text-primary mt-1">{DEMO_MODE_LABEL}</p>
+              )}
+            </div>
             <Badge variant="outline" className="bg-primary/20 text-primary border-primary/30">
-              Estimate
+              {demoMode ? 'Simulated' : 'Estimate'}
             </Badge>
           </div>
           <div className="h-64">
@@ -169,7 +218,7 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Power Factor</p>
-              <p className="text-lg font-semibold text-foreground">—</p>
+              <p className="text-lg font-semibold text-foreground">{powerFactorText}</p>
             </div>
           </div>
         </div>

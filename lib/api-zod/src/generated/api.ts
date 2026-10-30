@@ -28,6 +28,8 @@ export const GetDashboardSummaryResponse = zod.object({
   "voltageV": zod.number(),
   "currentA": zod.number(),
   "powerFactorKw": zod.number(),
+  "demoMode": zod.boolean().optional().describe('True when voltage, current, power and energy are simulated from appliance states rather than measured by the ESP32 sensors.'),
+  "powerFactor": zod.number().optional().describe('Configured demo power-factor assumption (only present in demo mode; not a measurement).'),
   "todayChangePercent": zod.number(),
   "monthChangePercent": zod.number(),
   "billChangePercent": zod.number(),

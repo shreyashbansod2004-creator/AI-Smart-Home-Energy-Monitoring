@@ -14,6 +14,10 @@ export interface DashboardSummary {
   voltageV: number;
   currentA: number;
   powerFactorKw: number;
+  /** True when voltage, current, power and energy are simulated from appliance states rather than measured by the ESP32 sensors. */
+  demoMode?: boolean;
+  /** Configured demo power-factor assumption (only present in demo mode; not a measurement). */
+  powerFactor?: number;
   todayChangePercent: number;
   monthChangePercent: number;
   billChangePercent: number;

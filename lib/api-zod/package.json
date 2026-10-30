@@ -8,5 +8,8 @@
   },
   "dependencies": {
     "zod": "catalog:"
+  },
+  "scripts": {
+    "test": "node --test src/*.test.mjs"
   }
 }

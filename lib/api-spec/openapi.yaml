@@ -290,6 +290,12 @@ components:
           type: number
         powerFactorKw:
           type: number
+        demoMode:
+          type: boolean
+          description: True when voltage, current, power and energy are simulated from appliance states rather than measured by the ESP32 sensors.
+        powerFactor:
+          type: number
+          description: Configured demo power-factor assumption (only present in demo mode; not a measurement).
         todayChangePercent:
           type: number
         monthChangePercent:
