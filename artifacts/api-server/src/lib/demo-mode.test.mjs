@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   DemoEnergyLedger,
   getConfirmedApplianceStates,
+  getDemoVoltageV,
   isDemoModeEnabled,
 } from "./demo-mode.ts";
 import { CONFIRMED_APPLIANCE_IDS } from "@workspace/api-zod";
@@ -29,8 +30,10 @@ describe("demo mode safety", () => {
     const ledger = new DemoEnergyLedger();
     const reading = ledger.sample(allOn, 1_000_000);
     assert.equal(reading.powerW, 15.5);
-    assert.equal(reading.voltageV, 230);
-    assert.ok(Math.abs(reading.currentA - 15.5 / (230 * 0.9)) < 1e-12);
+    assert.ok(reading.voltageV >= 220 && reading.voltageV <= 240);
+    assert.ok(Math.abs(reading.currentA - 15.5 / (reading.voltageV * 0.9)) < 1e-12);
+    assert.equal(getDemoVoltageV(1_000_000), reading.voltageV);
+    assert.notEqual(getDemoVoltageV(1_000_000), getDemoVoltageV(1_030_000));
     assert.equal(ledger.sample(allOff, 1_001_000)?.powerW, 0);
   });
 
