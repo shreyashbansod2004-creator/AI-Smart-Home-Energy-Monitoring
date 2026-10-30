@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - fix/demo-mode-dashboard-hardening
+      - fix/render-pnpm-build-approval
   pull_request:
     branches:
       - main
