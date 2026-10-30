@@ -18,7 +18,7 @@ export function isDemoModeEnabled(value: string | undefined): boolean {
   return value === "true";
 }
 
-export interface SimulatedElectricalReadings {
+export interface DemoEnergyHistoryPoint {\n  label: string;\n  energyKwh: number;\n  date: string;\n}\n\nexport interface SimulatedElectricalReadings {
   powerW: number;
   voltageV: number;
   currentA: number;
@@ -34,7 +34,7 @@ export interface SimulatedElectricalReadings {
 export class DemoEnergyLedger {
   private previousPowerW: number | null = null;
   private previousAtMs: number | null = null;
-  private energyWh = 0;
+  private energyWh = 0;\n  private history: DemoEnergyHistoryPoint[] = [];
 
   sample(
     appliances: readonly ApplianceRelayState[],
@@ -64,7 +64,7 @@ export class DemoEnergyLedger {
       voltageV,
       currentA: powerW === 0 ? 0 : powerW / (voltageV * DEMO_POWER_FACTOR),
       energyKwh: this.energyWh / 1_000,
-      sampledAt: new Date(nowMs).toISOString(),
+      sampledAt: sampledAt.toISOString(),
     };
   }
 
@@ -73,7 +73,7 @@ export class DemoEnergyLedger {
   }
 }
 
-export function getConfirmedApplianceStates(
+export const demoEnergyLedger = new DemoEnergyLedger();\n\nexport function getConfirmedApplianceStates(
   rows: readonly { id: string; name?: string; isOn: boolean }[],
 ): ApplianceRelayState[] | null {
   if (rows.some((row) => typeof row.isOn !== "boolean")) return null;
