@@ -12,7 +12,15 @@ import {
   GetDashboardSummaryResponse,
   GetLiveMetricsResponse,
   estimatePowerFromConfirmedStates,
+  calculateEnergyBillInr,
 } from "@workspace/api-zod";
+import {
+  demoEnergyLedger,
+  getConfirmedApplianceStates,
+  isDemoModeEnabled,
+} from "../lib/demo-mode";
+
+const demoModeEnabled = () => isDemoModeEnabled(process.env.DEMO_MODE);
 
 const router = Router();
 
@@ -26,15 +34,24 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
     const device = await getDefaultDevice();
     const appliances = await db.select().from(appliancesTable);
 
-    // Active power is estimated from the full set of acknowledged relay states.
-    // The ESP32's V_RMS × I_RMS × assumed-PF value is not a validated real-power
-    // measurement, so keep sensor voltage/current separate from this estimate.
-    const currentPowerW = estimatePowerFromConfirmedStates(appliances) ?? 0;
-    let sensorPowerW = 0;
-    let voltageV = 0;
-    let currentA = 0;
+    // Demo values are derived only from the complete set of confirmed relay states.
+    // An incomplete state set is an error, never a fabricated zero reading.
+    const demo = demoModeEnabled();
+    const confirmedStates = getConfirmedApplianceStates(appliances);
+    const simulated = demo && confirmedStates
+      ? demoEnergyLedger.sample(confirmedStates)
+      : null;
+    if (demo && !simulated) {
+      res.status(503).json({ error: "APPLIANCE_STATES_UNAVAILABLE" });
+      return;
+    }
 
-    if (device) {
+    let sensorPowerW = 0;
+    let hasSensorReading = false;
+    let voltageV = simulated?.voltageV ?? 0;
+    let currentA = simulated?.currentA ?? 0;
+
+    if (device && !demo) {
       const [latest] = await db
         .select()
         .from(readingsTable)
@@ -43,15 +60,25 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
         .limit(1);
       if (latest) {
         sensorPowerW = Math.round(latest.powerWatts);
+        hasSensorReading = true;
         voltageV = latest.voltageV ?? 0;
         currentA = latest.currentA ?? 0;
       }
     }
 
+    const estimatedAppliancePowerW = estimatePowerFromConfirmedStates(appliances);
+    const currentPowerW = demo
+      ? simulated!.powerW
+      : estimatedAppliancePowerW ?? (hasSensorReading ? sensorPowerW : null);
+    if (currentPowerW === null) {
+      res.status(503).json({ error: "APPLIANCE_STATES_UNAVAILABLE" });
+      return;
+    }
+
     // ── Today's energy from dailyUsage ──────────────────────────────────────
     const todayStr = new Date().toISOString().slice(0, 10);
-    let todayEnergyKwh = 0;
-    if (device) {
+    let todayEnergyKwh = demo ? simulated!.energyKwh : 0;
+    if (device && !demo) {
       const [todayRow] = await db
         .select()
         .from(dailyUsageTable)
@@ -67,10 +94,11 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
 
     // ── Month energy: sum of dailyUsage rows for current month ──────────────
     const firstOfMonth = `${todayStr.slice(0, 7)}-01`;
-    let monthEnergyKwh = 0;
+    // Demo totals are session-scoped and never read from or written to history.
+    let monthEnergyKwh = demo ? simulated!.energyKwh : 0;
     let prevMonthEnergyKwh = 0;
 
-    if (device) {
+    if (device && !demo) {
       const [monthSum] = await db
         .select({ total: sql<number>`COALESCE(SUM(energy_kwh), 0)` })
         .from(dailyUsageTable)
@@ -105,10 +133,13 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
 
     // ── Tariff rate from settings ────────────────────────────────────────────
     const [settings] = await db.select().from(settingsTable).limit(1);
-    const tariff = settings?.tariffRatePerKwh ?? 8.5;
+    const configuredTariff = Number(settings?.tariffRatePerKwh);
+    const tariff = Number.isFinite(configuredTariff) && configuredTariff >= 0
+      ? configuredTariff
+      : 8.5;
     const budget = settings?.monthlyBudgetInr ?? 1500;
 
-    const estimatedBillInr = parseFloat((monthEnergyKwh * tariff).toFixed(0));
+    const estimatedBillInr = calculateEnergyBillInr(monthEnergyKwh, tariff) ?? 0;
 
     // ── Percentage changes ───────────────────────────────────────────────────
     const monthChangePercent =
@@ -122,7 +153,7 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
     // Yesterday energy for today change
     const yesterdayStr = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
     let todayChangePercent = 0;
-    if (device) {
+    if (device && !demo) {
       const [yd] = await db
         .select()
         .from(dailyUsageTable)
@@ -160,6 +191,7 @@ router.get("/dashboard/summary", async (req, res): Promise<void> => {
       lastUpdated: new Date().toISOString(),
       activeApplianceCount: activeCount,
       totalApplianceCount: appliances.length,
+      demoMode: demo,
     });
     res.json(summary);
   } catch (err) {
@@ -176,12 +208,24 @@ router.get("/dashboard/live", async (req, res): Promise<void> => {
 
     // ── Last 20 readings for the sparkline ──────────────────────────────────
     let history: { time: string; powerW: number }[] = [];
-    const powerW = estimatePowerFromConfirmedStates(appliances) ?? 0;
-    let voltageV = 0;
-    let currentA = 0;
-    let timestamp = now.toISOString();
+    const demo = demoModeEnabled();
+    const confirmedStates = getConfirmedApplianceStates(appliances);
+    const simulated = demo && confirmedStates
+      ? demoEnergyLedger.sample(confirmedStates)
+      : null;
+    if (demo && !simulated) {
+      res.status(503).json({ error: "APPLIANCE_STATES_UNAVAILABLE" });
+      return;
+    }
+    const estimatedAppliancePowerW = estimatePowerFromConfirmedStates(appliances);
+    let powerW = demo ? simulated!.powerW : estimatedAppliancePowerW ?? 0;
+    let voltageV = simulated?.voltageV ?? 0;
+    let currentA = simulated?.currentA ?? 0;
+    let powerFactor = demo ? 0.9 : undefined;
+    let hasSensorReading = false;
+    let timestamp = simulated?.sampledAt ?? now.toISOString();
 
-    if (device) {
+    if (device && !demo) {
       const rows = await db
         .select()
         .from(readingsTable)
@@ -200,22 +244,36 @@ router.get("/dashboard/live", async (req, res): Promise<void> => {
 
       // Pull voltage and current from the latest reading
       const latest = ordered.at(-1);
-      if (latest) {
+      if (latest && !demo) {
         timestamp = latest.recordedAt.toISOString();
         voltageV = latest.voltageV ?? 0;
         currentA = latest.currentA ?? 0;
+        powerW = Math.round(latest.powerWatts);
+        hasSensorReading = true;
+        const apparentPower = voltageV * currentA;
+        if (apparentPower > 0) {
+          const calculatedPowerFactor = latest.powerWatts / apparentPower;
+          if (Number.isFinite(calculatedPowerFactor) && calculatedPowerFactor >= 0 && calculatedPowerFactor <= 1.1) {
+            powerFactor = calculatedPowerFactor;
+          }
+        }
       }
     }
 
-    // No readings: history stays empty and all metrics are 0 (device offline/not yet connected)
+    if (!demo && estimatedAppliancePowerW === null && !hasSensorReading) {
+      res.status(503).json({ error: "APPLIANCE_STATES_UNAVAILABLE" });
+      return;
+    }
 
     const metrics = GetLiveMetricsResponse.parse({
       timestamp,
       powerW,
       voltageV,
       currentA,
+      powerFactor,
       frequency: 50,
       history,
+      demoMode: demo,
     });
     res.json(metrics);
   } catch (err) {

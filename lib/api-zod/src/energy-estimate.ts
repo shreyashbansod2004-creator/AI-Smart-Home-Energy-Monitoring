@@ -12,7 +12,22 @@ export const CONFIRMED_APPLIANCE_IDS = Object.keys(
 
 export interface ApplianceRelayState {
   id: string;
+  name?: string;
   isOn: boolean;
+}
+
+const APPLIANCE_ID_BY_NAME: Record<string, keyof typeof APPLIANCE_POWER_RATINGS_W> = {
+  "living room light": "light-living",
+  "bedroom light": "light-bedroom",
+  "kitchen light": "light-kitchen",
+  "study room light": "light-study",
+  "mini fan": "fan-living",
+};
+
+export function getCanonicalApplianceId(id: string, name?: string): keyof typeof APPLIANCE_POWER_RATINGS_W | null {
+  if (Object.prototype.hasOwnProperty.call(APPLIANCE_POWER_RATINGS_W, id)) return id as keyof typeof APPLIANCE_POWER_RATINGS_W;
+  const normalizedName = name?.trim().toLowerCase().replace(/\s+/g, " ");
+  return normalizedName ? APPLIANCE_ID_BY_NAME[normalizedName] ?? null : null;
 }
 
 /**
@@ -23,9 +38,10 @@ export function estimatePowerFromConfirmedStates(
   appliances: readonly ApplianceRelayState[],
 ): number | null {
   if (appliances.length !== CONFIRMED_APPLIANCE_IDS.length) return null;
+  if (appliances.some((appliance) => typeof appliance.isOn !== "boolean")) return null;
 
   const byId = new Map(
-    appliances.map((appliance) => [appliance.id, appliance.isOn]),
+    appliances.map((appliance) => [getCanonicalApplianceId(appliance.id, appliance.name) ?? appliance.id, appliance.isOn]),
   );
   if (
     byId.size !== CONFIRMED_APPLIANCE_IDS.length ||
@@ -40,10 +56,19 @@ export function estimatePowerFromConfirmedStates(
   );
 }
 
-export function getAppliancePowerRatingW(id: string, fallback: number): number {
-  return Object.prototype.hasOwnProperty.call(APPLIANCE_POWER_RATINGS_W, id)
-    ? APPLIANCE_POWER_RATINGS_W[id as keyof typeof APPLIANCE_POWER_RATINGS_W]
-    : fallback;
+export function calculateEnergyBillInr(energyKwh: number, tariffRatePerKwh: number): number | null {
+  if (
+    !Number.isFinite(energyKwh) ||
+    !Number.isFinite(tariffRatePerKwh) ||
+    energyKwh < 0 ||
+    tariffRatePerKwh < 0
+  ) return null;
+  return Math.round(energyKwh * tariffRatePerKwh);
+}
+
+export function getAppliancePowerRatingW(id: string, fallback: number, name?: string): number {
+  const canonicalId = getCanonicalApplianceId(id, name);
+  return canonicalId ? APPLIANCE_POWER_RATINGS_W[canonicalId] : fallback;
 }
 
 export function matchesCommandAcknowledgement(

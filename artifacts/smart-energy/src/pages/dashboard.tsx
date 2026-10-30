@@ -23,16 +23,17 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { ApplianceCard } from '@/components/appliances/appliance-card';
 import { useQueryClient } from '@tanstack/react-query';
 import { Link } from 'wouter';
+import { filterEnergyChartData, formatCurrencyInr, formatEnergyKwh, isFiniteMetric, safePercentage } from '@/lib/dashboard-metrics';
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
   const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week');
 
-  const { data: summary, isLoading: summaryLoading } = useGetDashboardSummary({
+  const { data: summary, isLoading: summaryLoading, isError: summaryError } = useGetDashboardSummary({
     query: { queryKey: getGetDashboardSummaryQueryKey(), refetchInterval: 10000 },
   });
 
-  const { data: liveMetrics } = useGetLiveMetrics({
+  const { data: liveMetrics, isError: liveMetricsError } = useGetLiveMetrics({
     query: {
       queryKey: getGetLiveMetricsQueryKey(),
       refetchInterval: 3000,
@@ -41,7 +42,7 @@ export default function Dashboard() {
 
   const { data: energyData } = useGetEnergyConsumption({ period }, { query: { enabled: true, queryKey: getGetEnergyConsumptionQueryKey({ period }) } });
 
-  const { data: appliances } = useGetAppliances({
+  const { data: appliances, isError: appliancesError } = useGetAppliances({
     query: {
       queryKey: getGetAppliancesQueryKey(),
       refetchInterval: 3000,
@@ -72,9 +73,21 @@ export default function Dashboard() {
     });
   };
 
-  const activeAppliances = appliances?.filter((a) => a.isOn).slice(0, 3) || [];
-  const estimatedPowerW = estimatePowerFromConfirmedStates(appliances ?? []);
-  const sensorReadingFresh = isFreshSensorTimestamp(liveMetrics?.timestamp);
+  const validAppliances = Array.isArray(appliances)
+    ? appliances.filter((appliance) => appliance && typeof appliance.id === 'string' && typeof appliance.isOn === 'boolean')
+    : [];
+  const activeAppliances = validAppliances.filter((appliance) => appliance.isOn).slice(0, 3);
+  const energyChartData = filterEnergyChartData(energyData);
+  const todayEnergyText = formatEnergyKwh(summary?.todayEnergyKwh, 2);
+  const monthEnergyText = formatEnergyKwh(summary?.monthEnergyKwh, 1);
+  const estimatedBillText = formatCurrencyInr(summary?.estimatedBillInr);
+  const todayChange = safePercentage(summary?.todayChangePercent);
+  const monthChange = safePercentage(summary?.monthChangePercent);
+  const billChange = safePercentage(summary?.billChangePercent);
+  const estimatedPowerW = appliancesError
+    ? null
+    : estimatePowerFromConfirmedStates(validAppliances);
+  const sensorReadingFresh = !liveMetricsError && isFreshSensorTimestamp(liveMetrics?.timestamp);
   const voltageText =
     sensorReadingFresh && isValidVoltageV(liveMetrics?.voltageV)
       ? liveMetrics.voltageV.toFixed(1)
@@ -84,6 +97,10 @@ export default function Dashboard() {
     isValidVoltageV(liveMetrics?.voltageV) &&
     isValidCurrentA(liveMetrics?.currentA)
       ? liveMetrics.currentA.toFixed(2)
+      : '—';
+  const powerFactorText =
+    sensorReadingFresh && isFiniteMetric(liveMetrics?.powerFactor)
+      ? liveMetrics.powerFactor.toFixed(2)
       : '—';
 
   if (summaryLoading) {
@@ -105,6 +122,18 @@ export default function Dashboard() {
       <div>
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">Welcome back, monitor your energy usage</p>
+        {summary?.demoMode && (
+          <Badge variant="outline" className="mt-2">DEMO MODE – SIMULATED READINGS</Badge>
+        )}
+        {(summaryError || liveMetricsError || appliancesError) && (
+          <p role="alert" className="text-sm text-destructive mt-2">
+            {appliancesError
+              ? 'Appliance data is unavailable. Check the API connection and database appliance records.'
+              : summaryError
+                ? 'Dashboard summary is unavailable. Check the API and database connection.'
+                : 'Live electrical readings are unavailable. Check sensor data or the five confirmed appliance states required by Demo Mode.'}
+          </p>
+        )}
       </div>
 
       {/* Metrics Cards */}
@@ -118,29 +147,29 @@ export default function Dashboard() {
         />
         <MetricCard
           icon={Activity}
-          label="Today's Energy"
-          value={`${summary?.todayEnergyKwh.toFixed(2) || 0} kWh`}
+          label={summary?.demoMode ? 'Demo Session Energy' : "Today's Energy"}
+          value={todayEnergyText}
           trend={{
-            value: summary?.todayChangePercent || 0,
-            isPositive: (summary?.todayChangePercent || 0) >= 0,
+            value: todayChange,
+            isPositive: todayChange >= 0,
           }}
         />
         <MetricCard
           icon={Calendar}
-          label="This Month (So Far)"
-          value={`${summary?.monthEnergyKwh.toFixed(1) || 0} kWh`}
+          label={summary?.demoMode ? "Demo Session Energy" : "This Month (So Far)"}
+          value={monthEnergyText}
           trend={{
-            value: summary?.monthChangePercent || 0,
-            isPositive: (summary?.monthChangePercent || 0) >= 0,
+            value: monthChange,
+            isPositive: monthChange >= 0,
           }}
         />
         <MetricCard
           icon={IndianRupee}
-          label="Est. Monthly Bill"
-          value={`₹${summary?.estimatedBillInr.toLocaleString() || 0}`}
+          label={summary?.demoMode ? "Demo Session Bill" : "Est. Monthly Bill"}
+          value={estimatedBillText}
           trend={{
-            value: summary?.billChangePercent || 0,
-            isPositive: (summary?.billChangePercent || 0) <= 0,
+            value: billChange,
+            isPositive: billChange <= 0,
           }}
         />
       </div>
@@ -169,7 +198,7 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Power Factor</p>
-              <p className="text-lg font-semibold text-foreground">—</p>
+              <p className="text-lg font-semibold text-foreground">{powerFactorText}</p>
             </div>
           </div>
         </div>
@@ -177,7 +206,7 @@ export default function Dashboard() {
         {/* Energy Chart */}
         <div className="lg:col-span-2 bg-card border border-card-border rounded-xl p-6 shadow-md">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-foreground">Energy Consumption (kWh)</h2>
+            <h2 className="text-lg font-semibold text-foreground">{summary?.demoMode ? "Demo Session Energy (kWh)" : "Energy Consumption (kWh)"}</h2>
             <div className="flex gap-2">
               {(['day', 'week', 'month', 'year'] as const).map((p) => (
                 <Button
@@ -192,7 +221,7 @@ export default function Dashboard() {
             </div>
           </div>
           <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={energyData || []}>
+            <LineChart data={energyChartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="label" stroke="hsl(var(--muted-foreground))" fontSize={12} />
               <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />

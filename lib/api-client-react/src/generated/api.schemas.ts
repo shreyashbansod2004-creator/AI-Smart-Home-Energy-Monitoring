@@ -24,6 +24,7 @@ export interface DashboardSummary {
   lastUpdated: string;
   activeApplianceCount: number;
   totalApplianceCount: number;
+  demoMode?: boolean;
 }
 
 export interface PowerHistoryPoint {
@@ -36,8 +37,10 @@ export interface LiveMetrics {
   powerW: number;
   voltageV: number;
   currentA: number;
+  powerFactor?: number;
   frequency: number;
   history: PowerHistoryPoint[];
+  demoMode?: boolean;
 }
 
 export interface EnergyDataPoint {

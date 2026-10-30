@@ -21,4 +21,5 @@ export interface DashboardSummary {
   lastUpdated: string;
   activeApplianceCount: number;
   totalApplianceCount: number;
+  demoMode?: boolean;
 }

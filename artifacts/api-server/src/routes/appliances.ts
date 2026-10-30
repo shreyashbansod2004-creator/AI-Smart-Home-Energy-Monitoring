@@ -23,7 +23,7 @@ function deriveUsage(appliance: typeof appliancesTable.$inferSelect) {
   const hoursToday = 0; // Real running hours require tracking from actual readings
   const todayUsageKwh = parseFloat(((appliance.powerW / 1000) * hoursToday).toFixed(2));
   const monthlyCostInr = parseFloat((todayUsageKwh * 30 * 8.5).toFixed(0));
-  const ratedPowerW = getAppliancePowerRatingW(appliance.id, appliance.powerW);
+  const ratedPowerW = getAppliancePowerRatingW(appliance.id, appliance.powerW, appliance.name);
   return {
     id: appliance.id,
     name: appliance.name,

@@ -34,7 +34,8 @@ export const GetDashboardSummaryResponse = zod.object({
   "systemStatus": zod.string(),
   "lastUpdated": zod.string(),
   "activeApplianceCount": zod.number(),
-  "totalApplianceCount": zod.number()
+  "totalApplianceCount": zod.number(),
+  "demoMode": zod.boolean().optional()
 })
 
 
@@ -46,11 +47,13 @@ export const GetLiveMetricsResponse = zod.object({
   "powerW": zod.number(),
   "voltageV": zod.number(),
   "currentA": zod.number(),
+  "powerFactor": zod.number().optional(),
   "frequency": zod.number(),
   "history": zod.array(zod.object({
   "time": zod.string(),
   "powerW": zod.number()
-}))
+})),
+  "demoMode": zod.boolean().optional()
 })
 
 
