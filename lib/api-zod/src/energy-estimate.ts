@@ -56,6 +56,16 @@ export function estimatePowerFromConfirmedStates(
   );
 }
 
+export function calculateEnergyBillInr(energyKwh: number, tariffRatePerKwh: number): number | null {
+  if (
+    !Number.isFinite(energyKwh) ||
+    !Number.isFinite(tariffRatePerKwh) ||
+    energyKwh < 0 ||
+    tariffRatePerKwh < 0
+  ) return null;
+  return Math.round(energyKwh * tariffRatePerKwh);
+}
+
 export function getAppliancePowerRatingW(id: string, fallback: number, name?: string): number {
   const canonicalId = getCanonicalApplianceId(id, name);
   return canonicalId ? APPLIANCE_POWER_RATINGS_W[canonicalId] : fallback;
