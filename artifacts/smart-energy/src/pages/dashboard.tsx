@@ -206,7 +206,7 @@ export default function Dashboard() {
         {/* Energy Chart */}
         <div className="lg:col-span-2 bg-card border border-card-border rounded-xl p-6 shadow-md">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-foreground">Energy Consumption (kWh)</h2>
+            <h2 className="text-lg font-semibold text-foreground">{summary?.demoMode ? "Demo Session Energy (kWh)" : "Energy Consumption (kWh)"}</h2>
             <div className="flex gap-2">
               {(['day', 'week', 'month', 'year'] as const).map((p) => (
                 <Button
