@@ -7,8 +7,8 @@
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
-    "test:backend": "node --experimental-strip-types --test artifacts/api-server/src/lib/demo-mode.test.mjs lib/api-zod/src/energy-estimate.test.mjs",
-    "test:frontend": "node --experimental-strip-types --test artifacts/smart-energy/src/lib/sensor-readings.test.mjs artifacts/smart-energy/src/lib/dashboard-metrics.test.mjs",
+    "test:backend": "pnpm --filter @workspace/scripts exec tsx --test ../artifacts/api-server/src/lib/demo-mode.test.mjs ../lib/api-zod/src/energy-estimate.test.mjs",
+    "test:frontend": "pnpm --filter @workspace/scripts exec tsx --test ../artifacts/smart-energy/src/lib/sensor-readings.test.mjs ../artifacts/smart-energy/src/lib/dashboard-metrics.test.mjs",
     "test": "pnpm run test:backend && pnpm run test:frontend"
   },
   "private": true,
