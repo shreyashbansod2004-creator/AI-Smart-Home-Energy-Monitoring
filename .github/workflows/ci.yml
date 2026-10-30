@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -40,20 +40,6 @@ jobs:
           node-version: 22
           cache: pnpm
 
-      - name: Refresh lockfile metadata for the pinned pnpm version
-        run: pnpm install --lockfile-only --no-frozen-lockfile --network-concurrency=1 --child-concurrency=1 --reporter=append-only
-
-      - name: Commit pnpm 12 lockfile metadata when it changes
-        run: |
-          if git diff --quiet -- pnpm-lock.yaml; then
-            echo "pnpm-lock.yaml already matches pnpm 12.16.1"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add pnpm-lock.yaml
-          git commit -m "chore: refresh pnpm 12 lockfile metadata"
-          git push origin "HEAD:${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
 
       - name: Install locked workspace dependencies
         run: pnpm install --frozen-lockfile --network-concurrency=1 --child-concurrency=1 --reporter=append-only
